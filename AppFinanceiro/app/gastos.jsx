@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   SafeAreaView,
   StatusBar,
+  StyleSheet,
 } from 'react-native';
 
 import BarraDeNavegacao   from '../components/BarraDeNavegacao';
@@ -27,19 +28,19 @@ export default function GastosScreen() {
       : GASTOS.filter((g) => g.categoria === categoriaSelecionada);
 
   return (
-    <SafeAreaView className="flex-1 bg-fundo">
-      <StatusBar barStyle="dark-content" />
+    <SafeAreaView style={styles.safe}>
+      <StatusBar barStyle="dark-content" backgroundColor="#F4F2FF" />
 
-      <View className="flex-1">
+      <View style={styles.container}>
 
         {/* HEADER */}
-        <View className="flex-row items-center justify-between px-5 pt-4 pb-2">
-          <TouchableOpacity className="w-10 h-10 bg-white rounded-xl items-center justify-center shadow-sm">
-            <Text className="text-lg">←</Text>
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.headerBtn}>
+            <Text style={styles.headerIcone}>←</Text>
           </TouchableOpacity>
-          <Text className="text-xl font-bold text-titulo">Gastos</Text>
-          <TouchableOpacity className="w-10 h-10 bg-white rounded-xl items-center justify-center shadow-sm">
-            <Text className="text-lg">🔔</Text>
+          <Text style={styles.headerTitulo}>Gastos</Text>
+          <TouchableOpacity style={styles.headerBtn}>
+            <Text style={styles.headerIcone}>🔔</Text>
           </TouchableOpacity>
         </View>
 
@@ -51,7 +52,7 @@ export default function GastosScreen() {
         />
 
         {/* FILTRO DE CATEGORIAS */}
-        <View className="mt-2 mb-4">
+        <View style={styles.filtroWrapper}>
           <FiltroDeCategorias
             categorias={CATEGORIAS}
             categoriaSelecionada={categoriaSelecionada}
@@ -61,9 +62,9 @@ export default function GastosScreen() {
 
         {/* LISTA DE GASTOS */}
         <ScrollView
-          className="flex-1"
+          style={styles.lista}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 100 }}
+          contentContainerStyle={styles.listaConteudo}
         >
           {gastosFiltrados.map((gasto) => (
             <CartaoDeGasto key={gasto.id} {...gasto} />
@@ -71,11 +72,8 @@ export default function GastosScreen() {
         </ScrollView>
 
         {/* BOTÃO FLUTUANTE (FAB) */}
-        <TouchableOpacity
-          className="absolute bottom-20 self-center w-14 h-14 rounded-full bg-primaria items-center justify-center shadow-xl shadow-primaria"
-          activeOpacity={0.85}
-        >
-          <Text className="text-white text-3xl leading-8">＋</Text>
+        <TouchableOpacity style={styles.fab} activeOpacity={0.85}>
+          <Text style={styles.fabIcone}>＋</Text>
         </TouchableOpacity>
 
         {/* BARRA DE NAVEGAÇÃO */}
@@ -88,3 +86,73 @@ export default function GastosScreen() {
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  safe: {
+    flex: 1,
+    backgroundColor: '#F4F2FF',
+  },
+  container: {
+    flex: 1,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 8,
+  },
+  headerBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#6C47FF',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  headerIcone: {
+    fontSize: 18,
+  },
+  headerTitulo: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1A1A2E',
+  },
+  filtroWrapper: {
+    marginTop: 8,
+    marginBottom: 16,
+  },
+  lista: {
+    flex: 1,
+  },
+  listaConteudo: {
+    paddingBottom: 100,
+  },
+  fab: {
+    position: 'absolute',
+    bottom: 75,
+    alignSelf: 'center',
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#6C47FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#6C47FF',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  fabIcone: {
+    fontSize: 28,
+    color: '#FFFFFF',
+    lineHeight: 32,
+  },
+});
