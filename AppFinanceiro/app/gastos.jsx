@@ -1,38 +1,47 @@
 // app/gastos.jsx
-import React, { useState } from 'react';
+import React, { useState } from "react";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   View,
   Text,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
   StatusBar,
   StyleSheet,
-} from 'react-native';
+} from "react-native";
 
-import BarraDeNavegacao   from '../components/BarraDeNavegacao';
-import CarrosselDeDatas   from '../components/CarrosselDeDatas';
-import FiltroDeCategorias from '../components/FiltroDeCategorias';
-import CartaoDeGasto      from '../components/CartaoDeGasto';
+import BarraDeNavegacao from "../components/BarraDeNavegacao";
+import CarrosselDeDatas from "../components/CarrosselDeDatas";
+import FiltroDeCategorias from "../components/FiltroDeCategorias";
+import CartaoDeGasto from "../components/CartaoDeGasto";
 
-import { DATAS, INDICE_DIA_SELECIONADO, CATEGORIAS, GASTOS } from '../constants/mockData';
+import {
+  DATAS,
+  INDICE_DIA_SELECIONADO,
+  CATEGORIAS,
+  GASTOS,
+} from "../constants/mockData";
 
 export default function GastosScreen() {
-  const [indiceDateSelecionado, setIndiceDateSelecionado] = useState(INDICE_DIA_SELECIONADO);
-  const [categoriaSelecionada, setCategoriaSelecionada]   = useState('All');
-  const [abaAtiva, setAbaAtiva]                           = useState('gastos');
+  const insets = useSafeAreaInsets();
+
+  const [indiceDateSelecionado, setIndiceDateSelecionado] = useState(
+    INDICE_DIA_SELECIONADO,
+  );
+  const [categoriaSelecionada, setCategoriaSelecionada] = useState("All");
+  const [abaAtiva, setAbaAtiva] = useState("gastos");
 
   const gastosFiltrados =
-    categoriaSelecionada === 'All'
+    categoriaSelecionada === "All"
       ? GASTOS
       : GASTOS.filter((g) => g.categoria === categoriaSelecionada);
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={[`top`]}>
       <StatusBar barStyle="dark-content" backgroundColor="#F4F2FF" />
 
       <View style={styles.container}>
-
         {/* HEADER */}
         <View style={styles.header}>
           <TouchableOpacity style={styles.headerBtn}>
@@ -77,11 +86,9 @@ export default function GastosScreen() {
         </TouchableOpacity>
 
         {/* BARRA DE NAVEGAÇÃO */}
-        <BarraDeNavegacao
-          abaAtiva={abaAtiva}
-          aoTocarAba={setAbaAtiva}
-        />
-
+        <View style={{ paddingBottom: insets.bottom }}>
+          <BarraDeNavegacao abaAtiva={abaAtiva} aoTocarAba={setAbaAtiva} />
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -90,15 +97,15 @@ export default function GastosScreen() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: '#F4F2FF',
+    backgroundColor: "#F4F2FF",
   },
   container: {
     flex: 1,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 8,
@@ -107,10 +114,10 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#6C47FF',
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#6C47FF",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 6,
@@ -121,8 +128,8 @@ const styles = StyleSheet.create({
   },
   headerTitulo: {
     fontSize: 20,
-    fontWeight: '700',
-    color: '#1A1A2E',
+    fontWeight: "700",
+    color: "#1A1A2E",
   },
   filtroWrapper: {
     marginTop: 8,
@@ -135,16 +142,16 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
   fab: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 75,
-    alignSelf: 'center',
+    alignSelf: "center",
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#6C47FF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#6C47FF',
+    backgroundColor: "#6C47FF",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#6C47FF",
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.4,
     shadowRadius: 10,
@@ -152,7 +159,7 @@ const styles = StyleSheet.create({
   },
   fabIcone: {
     fontSize: 28,
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     lineHeight: 32,
   },
 });

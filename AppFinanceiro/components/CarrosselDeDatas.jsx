@@ -1,13 +1,19 @@
 // components/CarrosselDeDatas.jsx
-import React from 'react';
-import { ScrollView, TouchableOpacity, Text, StyleSheet } from 'react-native';
+import React from "react";
+import { ScrollView, TouchableOpacity, Text, StyleSheet } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-const CarrosselDeDatas = ({ datas = [], indiceSelecionado = 0, aoSelecionarData }) => {
+const CarrosselDeDatas = ({
+  datas = [],
+  indiceSelecionado = 0,
+  aoSelecionarData,
+}) => {
   return (
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.scrollContent}
+      style={styles.scroll}
     >
       {datas.map((item, index) => {
         const estaSelecionado = index === indiceSelecionado;
@@ -18,13 +24,22 @@ const CarrosselDeDatas = ({ datas = [], indiceSelecionado = 0, aoSelecionarData 
             onPress={() => aoSelecionarData?.(index)}
             activeOpacity={0.8}
           >
-            <Text style={[styles.mes, estaSelecionado && styles.textoSelecionado]}>
+            <Text
+              style={[styles.mes, estaSelecionado && styles.textoSelecionado]}
+            >
               {item.mes}
             </Text>
-            <Text style={[styles.dia, estaSelecionado && styles.textoSelecionado]}>
+            <Text
+              style={[styles.dia, estaSelecionado && styles.textoSelecionado]}
+            >
               {item.dia}
             </Text>
-            <Text style={[styles.diaSemana, estaSelecionado && styles.textoSelecionado]}>
+            <Text
+              style={[
+                styles.diaSemana,
+                estaSelecionado && styles.textoSelecionado,
+              ]}
+            >
               {item.diaSemana}
             </Text>
           </TouchableOpacity>
@@ -35,38 +50,42 @@ const CarrosselDeDatas = ({ datas = [], indiceSelecionado = 0, aoSelecionarData 
 };
 
 const styles = StyleSheet.create({
+  scroll: {
+    flexGrow: 0, // Impede expansão vertical
+  },
   scrollContent: {
     paddingHorizontal: 16,
     paddingVertical: 8,
     gap: 8,
+    alignItems: "center", // ← Adicione isso também
   },
   item: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingVertical: 10,
     paddingHorizontal: 14,
     borderRadius: 16,
     minWidth: 60,
   },
   itemSelecionado: {
-    backgroundColor: '#6C47FF',
+    backgroundColor: "#6C47FF",
   },
   mes: {
     fontSize: 11,
-    color: '#999',
+    color: "#999",
     marginBottom: 2,
   },
   dia: {
     fontSize: 20,
-    fontWeight: '700',
-    color: '#1A1A2E',
+    fontWeight: "700",
+    color: "#1A1A2E",
   },
   diaSemana: {
     fontSize: 11,
-    color: '#999',
+    color: "#999",
     marginTop: 2,
   },
   textoSelecionado: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
   },
 });
 
