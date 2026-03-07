@@ -81,9 +81,9 @@ export default function GastosScreen() {
         </ScrollView>
 
         {/* BOTÃO FLUTUANTE (FAB) */}
-        <TouchableOpacity style={styles.fab} activeOpacity={0.85}>
+        {/* <TouchableOpacity style={styles.fab} activeOpacity={0.85}>
           <Text style={styles.fabIcone}>＋</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         {/* BARRA DE NAVEGAÇÃO */}
         <View style={{ paddingBottom: insets.bottom }}>
