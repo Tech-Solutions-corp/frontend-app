@@ -44,3 +44,16 @@ export const GASTOS = [
     corIcone: '#E5E5FF',
   },
 ];
+
+export const USUARIO = {
+  nome: "Livia Vaccaro",
+  avatar: "https://i.pravatar.cc/150?img=47",
+  limitePercent: 85,
+};
+
+export const CATEGORIAS_GASTOS = [
+  { id: '1', nome: 'Alimentação', qtd: 23, percent: 70, icone: '🛍️', cor: '#FF6B8A' },
+  { id: '2', nome: 'Lazer',       qtd: 30, percent: 52, icone: '👤', cor: '#A78BFA' },
+  { id: '3', nome: 'Faculdade',   qtd: 30, percent: 87, icone: '📖', cor: '#F97316' },
+  { id: '4', nome: 'Transporte',  qtd: 3,  percent: 87, icone: '📖', cor: '#FBBF24' },
+];
