@@ -13,6 +13,8 @@ import {
   StyleSheet,
 } from "react-native";
 
+import SinoIcon from "../assets/sino-icon.png";
+
 import BarraDeNavegacao from "../components/BarraDeNavegacao";
 
 export default function GastosScreen() {
@@ -35,7 +37,7 @@ export default function GastosScreen() {
         <View style={styles.header}>
           <Text style={styles.headerTitulo}>GASTOS</Text>
           <TouchableOpacity style={styles.headerBtn}>
-            <Text style={styles.headerIcone}>🔔</Text>
+            <Image style={styles.btn} source={SinoIcon}/>
           </TouchableOpacity>
         </View>
 
@@ -104,14 +106,12 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: "#FFFFFF",
     alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#6C47FF",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 3,
+    justifyContent: "center"
+  },
+  btn: {
+    width: 23,
+    height: 23
   },
   headerIcone: {
     fontSize: 18,

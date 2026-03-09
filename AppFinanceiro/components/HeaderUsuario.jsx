@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import SinoIcon from "../assets/sino-icon.png";
 
 const HeaderUsuario = ({ nome, avatar }) => {
   return (
@@ -11,8 +12,8 @@ const HeaderUsuario = ({ nome, avatar }) => {
           <Text style={styles.nome}>{nome}</Text>
         </View>
       </View>
-      <TouchableOpacity style={styles.sinoBotao}>
-        <Text style={{ fontSize: 20 }}>🔔</Text>
+      <TouchableOpacity style={styles.headerBtn}>
+        <Image style={styles.btn} source={SinoIcon}/>
       </TouchableOpacity>
     </View>
   );
@@ -24,7 +25,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingTop: 16,
     paddingBottom: 16,
   },
   esquerda: {
@@ -46,11 +47,16 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#1A1A2E',
   },
-  sinoBotao: {
+  headerBtn: {
     width: 40,
     height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  btn: {
+    width: 23,
+    height: 23
   },
 });
 
