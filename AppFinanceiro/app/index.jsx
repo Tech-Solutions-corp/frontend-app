@@ -24,7 +24,7 @@ export default function HomeScreen() {
 
         <CardLimite
           percent={USUARIO.limitePercent}
-          aoVerGastos={() => router.push("/gastos")}
+          aoVerGastos={() => router.push("/")}
         />
 
         <View style={styles.secaoHeader}>
