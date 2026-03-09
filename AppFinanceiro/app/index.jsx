@@ -40,8 +40,7 @@ export default function HomeScreen() {
 
         <View style={{ height: 100 }} />
       </ScrollView>
-
-      <BarraDeNavegacao abaAtiva="home" />
+      <BarraDeNavegacao />
     </SafeAreaView>
   );
 }
