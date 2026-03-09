@@ -6,6 +6,9 @@ export const DATAS = [
   { dia: 25, diaSemana: 'Domingo', mes: 'Maio' },
   { dia: 26, diaSemana: 'Segunda', mes: 'Maio' },
   { dia: 27, diaSemana: 'Terça',   mes: 'Maio' },
+  { dia: 28, diaSemana: 'Quarta',   mes: 'Maio' },
+  { dia: 29, diaSemana: 'Quinta',   mes: 'Maio' },
+
 ];
 
 export const INDICE_DIA_SELECIONADO = 2;

@@ -1,7 +1,9 @@
 // app/gastos.jsx
 import React, { useState } from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import {
   View,
   Text,
@@ -12,78 +14,66 @@ import {
 } from "react-native";
 
 import BarraDeNavegacao from "../components/BarraDeNavegacao";
-import CarrosselDeDatas from "../components/CarrosselDeDatas";
-import FiltroDeCategorias from "../components/FiltroDeCategorias";
-import CartaoDeGasto from "../components/CartaoDeGasto";
-
-import {
-  DATAS,
-  INDICE_DIA_SELECIONADO,
-  CATEGORIAS,
-  GASTOS,
-} from "../constants/mockData";
 
 export default function GastosScreen() {
   const insets = useSafeAreaInsets();
-
-  const [indiceDateSelecionado, setIndiceDateSelecionado] = useState(
-    INDICE_DIA_SELECIONADO,
-  );
-  const [categoriaSelecionada, setCategoriaSelecionada] = useState("All");
   const [abaAtiva, setAbaAtiva] = useState("gastos");
 
-  const gastosFiltrados =
-    categoriaSelecionada === "All"
-      ? GASTOS
-      : GASTOS.filter((g) => g.categoria === categoriaSelecionada);
+  // Mock temporário para visualização
+  const gastosExemplo = [
+    { id: 1, titulo: "Supermercado", valor: 150.0, categoria: "Alimentação" },
+    { id: 2, titulo: "Uber", valor: 25.5, categoria: "Transporte" },
+    { id: 3, titulo: "Netflix", valor: 39.9, categoria: "Entretenimento" },
+  ];
 
   return (
-    <SafeAreaView style={styles.safe} edges={[`top`]}>
+    <SafeAreaView style={styles.safe} edges={["top"]}>
       <StatusBar barStyle="dark-content" backgroundColor="#F4F2FF" />
 
       <View style={styles.container}>
         {/* HEADER */}
         <View style={styles.header}>
-          <TouchableOpacity style={styles.headerBtn}>
-            <Text style={styles.headerIcone}>←</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitulo}>Gastos</Text>
+          <Text style={styles.headerTitulo}>GASTOS</Text>
           <TouchableOpacity style={styles.headerBtn}>
             <Text style={styles.headerIcone}>🔔</Text>
           </TouchableOpacity>
         </View>
 
-        {/* CARROSSEL DE DATAS */}
-        <CarrosselDeDatas
-          datas={DATAS}
-          indiceSelecionado={indiceDateSelecionado}
-          aoSelecionarData={setIndiceDateSelecionado}
-        />
-
-        {/* FILTRO DE CATEGORIAS */}
-        <View style={styles.filtroWrapper}>
-          <FiltroDeCategorias
-            categorias={CATEGORIAS}
-            categoriaSelecionada={categoriaSelecionada}
-            aoSelecionar={setCategoriaSelecionada}
-          />
-        </View>
-
-        {/* LISTA DE GASTOS */}
+        {/* CONTEÚDO PRINCIPAL */}
         <ScrollView
           style={styles.lista}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.listaConteudo}
         >
-          {gastosFiltrados.map((gasto) => (
-            <CartaoDeGasto key={gasto.id} {...gasto} />
-          ))}
-        </ScrollView>
+          {/* Placeholder de filtros */}
+          <View style={styles.filtrosPlaceholder}>
+            <Text style={styles.placeholderTexto}>
+              [ Filtros de categoria aqui ]
+            </Text>
+          </View>
 
-        {/* BOTÃO FLUTUANTE (FAB) */}
-        {/* <TouchableOpacity style={styles.fab} activeOpacity={0.85}>
-          <Text style={styles.fabIcone}>＋</Text>
-        </TouchableOpacity> */}
+          {/* Lista de gastos mock */}
+          {gastosExemplo.map((gasto) => (
+            <View key={gasto.id} style={styles.cardGasto}>
+              <View style={styles.cardInfo}>
+                <Text style={styles.cardTitulo}>{gasto.titulo}</Text>
+                <Text style={styles.cardCategoria}>{gasto.categoria}</Text>
+              </View>
+              <Text style={styles.cardValor}>
+                R$ {gasto.valor.toFixed(2).replace(".", ",")}
+              </Text>
+            </View>
+          ))}
+
+          {/* Indicador de placeholder */}
+          <View style={styles.placeholderContainer}>
+            <Text style={styles.placeholderEmoji}>📊</Text>
+            <Text style={styles.placeholderTitulo}>Tela de Gastos</Text>
+            <Text style={styles.placeholderSubtitulo}>
+              Molde para teste de navegação
+            </Text>
+          </View>
+        </ScrollView>
 
         {/* BARRA DE NAVEGAÇÃO */}
         <View style={{ paddingBottom: insets.bottom }}>
@@ -131,35 +121,73 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#1A1A2E",
   },
-  filtroWrapper: {
-    marginTop: 8,
-    marginBottom: 16,
-  },
   lista: {
     flex: 1,
   },
   listaConteudo: {
+    paddingHorizontal: 20,
     paddingBottom: 100,
   },
-  fab: {
-    position: "absolute",
-    bottom: 75,
-    alignSelf: "center",
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "#6C47FF",
+  filtrosPlaceholder: {
+    backgroundColor: "#E0D9FF",
+    borderRadius: 12,
+    padding: 16,
+    marginVertical: 16,
     alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#6C47FF",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4,
-    shadowRadius: 10,
-    elevation: 8,
   },
-  fabIcone: {
-    fontSize: 28,
-    color: "#FFFFFF",
-    lineHeight: 32,
+  placeholderTexto: {
+    color: "#6C47FF",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  cardGasto: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    shadowColor: "#6C47FF",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  cardInfo: {
+    flex: 1,
+  },
+  cardTitulo: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#1A1A2E",
+  },
+  cardCategoria: {
+    fontSize: 13,
+    color: "#8E8E93",
+    marginTop: 4,
+  },
+  cardValor: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#6C47FF",
+  },
+  placeholderContainer: {
+    alignItems: "center",
+    paddingVertical: 40,
+  },
+  placeholderEmoji: {
+    fontSize: 48,
+    marginBottom: 12,
+  },
+  placeholderTitulo: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#1A1A2E",
+  },
+  placeholderSubtitulo: {
+    fontSize: 14,
+    color: "#8E8E93",
+    marginTop: 4,
   },
 });
