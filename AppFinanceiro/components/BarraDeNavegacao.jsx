@@ -25,8 +25,8 @@ const BarraDeNavegacao = ({ abaAtiva = "home" }) => {
   const ROTAS = {
     home: "/",
     agenda: "/agenda",
-    gastos: "/",
-    perfil: "/",
+    gastos: "/gastos",
+    perfil: "/perfil",
   };
 
   const handlePress = (abaId) => {
