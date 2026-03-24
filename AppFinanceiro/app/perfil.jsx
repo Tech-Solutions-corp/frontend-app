@@ -1,292 +1,96 @@
-// app/perfil.jsx
-import React, { useState } from "react";
-import ImgPerfil from "../assets/perfil-icon.png";
-
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StatusBar,
-  StyleSheet,
-} from "react-native";
-
+import React from "react";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { router } from "expo-router";
 import BarraDeNavegacao from "../components/BarraDeNavegacao";
+import { useRequireAuth } from "../hooks/useRequireAuth";
+import { useAuth } from "../context/AuthContext";
+import ThemedScreen from "../components/ThemedScreen";
+import { COLORS, SHADOW } from "../constants/theme";
 
 export default function PerfilScreen() {
-  const insets = useSafeAreaInsets();
-  const [abaAtiva, setAbaAtiva] = useState("perfil");
+  const { loading: authLoading, isAuthenticated } = useRequireAuth();
+  const { userEmail, userId, logout } = useAuth();
 
-  // Mock do usuário
-  const usuario = {
-    nome: "Livia Vaccaro",
-    email: "livia@email.com",
-    avatar: ImgPerfil,
+  const onLogout = async () => {
+    await logout();
+    router.replace("/login");
   };
 
-  // Opções do menu de perfil
-  const opcoesMenu = [
-    {
-      id: 1,
-      icone: ImgPerfil,
-      titulo: "Meus dados",
-      subtitulo: "Editar informações pessoais",
-    },
-    {
-      id: 2,
-      icone: "🔔",
-      titulo: "Notificações",
-      subtitulo: "Configurar alertas",
-    },
-    {
-      id: 3,
-      icone: "🎨",
-      titulo: "Aparência",
-      subtitulo: "Tema e personalização",
-    },
-    {
-      id: 4,
-      icone: "🔒",
-      titulo: "Segurança",
-      subtitulo: "Senha e privacidade",
-    },
-    { id: 5, icone: "❓", titulo: "Ajuda", subtitulo: "FAQ e suporte" },
-  ];
+  if (authLoading || !isAuthenticated) {
+    return null;
+  }
 
   return (
-    <SafeAreaView style={styles.safe} edges={["top"]}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F4F2FF" />
+    <ThemedScreen contentContainerStyle={styles.container}>
+        <Text style={styles.title}>Perfil</Text>
 
-      <View style={styles.container}>
-        {/* HEADER */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitulo}>PERFIL</Text>
-          <TouchableOpacity style={styles.headerBtn}>
-            <Text style={styles.headerIcone}>⚙️</Text>
-          </TouchableOpacity>
+        <View style={styles.card}>
+          <Text style={styles.label}>Email</Text>
+          <Text style={styles.value}>{userEmail || "Nao informado"}</Text>
+
+          <Text style={[styles.label, { marginTop: 10 }]}>ID do usuario</Text>
+          <Text style={styles.value}>{userId || "-"}</Text>
         </View>
 
-        {/* CONTEÚDO PRINCIPAL */}
-        <ScrollView
-          style={styles.lista}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.listaConteudo}
+        <TouchableOpacity
+          style={styles.secondaryButton}
+          onPress={() => router.push("/recuperar-senha")}
         >
-          {/* Card do usuário */}
-          <View style={styles.cardUsuario}>
-            <View style={styles.avatarContainer}>
-              <Text style={styles.avatarTexto}>{usuario.avatar}</Text>
-            </View>
-            <View style={styles.usuarioInfo}>
-              <Text style={styles.usuarioNome}>{usuario.nome}</Text>
-              <Text style={styles.usuarioEmail}>{usuario.email}</Text>
-            </View>
-            <TouchableOpacity style={styles.editarBtn}>
-              <Text style={styles.editarTexto}>Editar</Text>
-            </TouchableOpacity>
-          </View>
+          <Text style={styles.secondaryButtonText}>Recuperar senha por email</Text>
+        </TouchableOpacity>
 
-          {/* Menu de opções */}
-          <View style={styles.menuContainer}>
-            {opcoesMenu.map((opcao) => (
-              <TouchableOpacity key={opcao.id} style={styles.menuItem}>
-                <View style={styles.menuIconeContainer}>
-                  <Text style={styles.menuIcone}>{opcao.icone}</Text>
-                </View>
-                <View style={styles.menuInfo}>
-                  <Text style={styles.menuTitulo}>{opcao.titulo}</Text>
-                  <Text style={styles.menuSubtitulo}>{opcao.subtitulo}</Text>
-                </View>
-                <Text style={styles.menuSeta}>›</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+        <TouchableOpacity
+          style={styles.secondaryButton}
+          onPress={() => router.push("/importacoes")}
+        >
+          <Text style={styles.secondaryButtonText}>Historico de importacoes</Text>
+        </TouchableOpacity>
 
-          {/* Botão de logout */}
-          <TouchableOpacity style={styles.logoutBtn}>
-            <Text style={styles.logoutTexto}>Sair da conta</Text>
-          </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.secondaryButton}
+          onPress={() => router.push("/insights")}
+        >
+          <Text style={styles.secondaryButtonText}>Tela de insights IA</Text>
+        </TouchableOpacity>
 
-          {/* Indicador de placeholder */}
-          <View style={styles.placeholderContainer}>
-            <Text style={styles.placeholderSubtitulo}>
-              Molde para teste de navegação
-            </Text>
-          </View>
-        </ScrollView>
-
-        {/* BARRA DE NAVEGAÇÃO */}
-        <View style={{ paddingBottom: insets.bottom }}>
-          <BarraDeNavegacao abaAtiva={abaAtiva} aoTocarAba={setAbaAtiva} />
-        </View>
-      </View>
-    </SafeAreaView>
+        <TouchableOpacity style={styles.logoutButton} onPress={onLogout}>
+          <Text style={styles.logoutButtonText}>Sair da conta</Text>
+        </TouchableOpacity>
+      <BarraDeNavegacao abaAtiva="perfil" />
+    </ThemedScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: "#F4F2FF",
-  },
-  container: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 8,
-  },
-  headerBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: "#FFFFFF",
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#6C47FF",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 3,
-  },
-  headerIcone: {
-    fontSize: 18,
-  },
-  headerTitulo: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#1A1A2E",
-  },
-  lista: {
-    flex: 1,
-  },
-  listaConteudo: {
-    paddingHorizontal: 20,
-    paddingBottom: 100,
-  },
-  cardUsuario: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 20,
-    padding: 20,
-    marginTop: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    shadowColor: "#6C47FF",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 4,
-  },
-  avatarContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: "#E0D9FF",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  avatarTexto: {
-    fontSize: 28,
-  },
-  usuarioInfo: {
-    flex: 1,
-    marginLeft: 16,
-  },
-  usuarioNome: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#1A1A2E",
-  },
-  usuarioEmail: {
-    fontSize: 14,
-    color: "#8E8E93",
-    marginTop: 2,
-  },
-  editarBtn: {
-    backgroundColor: "#6C47FF",
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  },
-  editarTexto: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  menuContainer: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 20,
-    marginTop: 24,
-    overflow: "hidden",
-    shadowColor: "#6C47FF",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  menuItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#F4F2FF",
-  },
-  menuIconeContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: "#F4F2FF",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  menuIcone: {
-    fontSize: 18,
-  },
-  menuInfo: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  menuTitulo: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#1A1A2E",
-  },
-  menuSubtitulo: {
-    fontSize: 13,
-    color: "#8E8E93",
-    marginTop: 2,
-  },
-  menuSeta: {
-    fontSize: 24,
-    color: "#C7C7CC",
-    fontWeight: "300",
-  },
-  logoutBtn: {
-    backgroundColor: "#FFF0F0",
+  container: { paddingBottom: 110 },
+  title: { fontSize: 27, fontWeight: "800", color: COLORS.navy, marginBottom: 10 },
+  card: {
+    backgroundColor: COLORS.white,
     borderRadius: 16,
-    padding: 16,
-    marginTop: 24,
+    borderWidth: 1,
+    borderColor: COLORS.purple,
+    padding: 14,
+    marginBottom: 12,
+    ...SHADOW,
+  },
+  label: { color: COLORS.indigo, fontSize: 12, fontWeight: "700" },
+  value: { color: COLORS.navy, fontSize: 15, marginTop: 4 },
+  secondaryButton: {
+    backgroundColor: COLORS.white,
+    borderColor: COLORS.purple,
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    marginBottom: 8,
+  },
+  secondaryButtonText: { color: COLORS.navy, fontWeight: "600" },
+  logoutButton: {
+    marginTop: 12,
+    backgroundColor: COLORS.pink,
+    borderRadius: 12,
+    paddingVertical: 12,
     alignItems: "center",
   },
-  logoutTexto: {
-    color: "#FF3B30",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  placeholderContainer: {
-    alignItems: "center",
-    paddingVertical: 24,
-  },
-  placeholderSubtitulo: {
-    fontSize: 14,
-    color: "#8E8E93",
-  },
+  logoutButtonText: { color: COLORS.navy, fontWeight: "700" },
 });

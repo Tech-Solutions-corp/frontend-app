@@ -1,6 +1,5 @@
 import {
   View,
-  TouchableOpacity,
   Text,
   ScrollView,
   StyleSheet,
@@ -44,6 +43,7 @@ export default function HomeScreen() {
     </SafeAreaView>
   );
 }
+
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
@@ -75,21 +75,5 @@ const styles = StyleSheet.create({
     color: "#6C47FF",
     fontSize: 12,
     fontWeight: "700",
-  },
-  botaoAdicionar: {
-    position: "absolute",
-    bottom: 72,
-    alignSelf: "center",
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "#6C47FF",
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#6C47FF",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    elevation: 8,
   },
 });

@@ -1,493 +1,157 @@
-import React, { useState } from "react";
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StatusBar,
-  StyleSheet,
-  Image,
-} from "react-native";
-
+import React, { useEffect, useState } from "react";
+import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import BarraDeNavegacao from "../components/BarraDeNavegacao";
-import { INSIGHTS, CATEGORIAS_GASTOS } from "../constants/mockData";
-import SinoIcon from "../assets/sino-icon.png";
+import { useRequireAuth } from "../hooks/useRequireAuth";
+import { useAuth } from "../context/AuthContext";
+import { financeApi } from "../services/financeApi";
+import ThemedScreen from "../components/ThemedScreen";
+import { COLORS, SHADOW } from "../constants/theme";
+
+const INSIGHT_TYPES = ["SPENDING_PATTERN", "SAVING_TIP", "ANOMALY_DETECTION"];
+
+function formatType(type) {
+  if (type === "SPENDING_PATTERN") return "Padrao de gastos";
+  if (type === "SAVING_TIP") return "Dica de economia";
+  return "Deteccao de anomalia";
+}
 
 export default function InsightsScreen() {
-  const insets = useSafeAreaInsets();
-  const [abaAtiva, setAbaAtiva] = useState("insights");
-  const [insightSelecionado, setInsightSelecionado] = useState(null);
+  const { loading: authLoading, isAuthenticated } = useRequireAuth();
+  const { token, userId } = useAuth();
 
-  const getInsightDetalhado = (insightId) => {
-    const detalhes = {
-      "1": {
-        recomendacoes: [
-          "Reduza compras de itens supérfluos",
-          "Planeje suas refeições para economizar",
-          "Compare preços antes de comprar",
-        ],
-      },
-      "2": {
-        recomendacoes: [
-          "Seu gasto com transporte é consistente",
-          "Considere usar transporte público mais",
-          "Compartilhe caronas para economizar",
-        ],
-      },
-      "3": {
-        recomendacoes: [
-          "Defina um limite de gastos com lazer",
-          "Procure atividades gratuitas",
-          "Reserve um orçamento mensal para lazer",
-        ],
-      },
-      "4": {
-        recomendacoes: [
-          "Mantenha esse ritmo de economia",
-          "Considere investir essa quantia",
-          "Defina novas metas de economia",
-        ],
-      },
-    };
-    return detalhes[insightId] || { recomendacoes: [] };
-  };
+  const [insights, setInsights] = useState([]);
+  const [content, setContent] = useState("");
+  const [insightType, setInsightType] = useState("SAVING_TIP");
+  const [submitting, setSubmitting] = useState(false);
 
-  const obterCoresInsight = (tipo) => {
-    switch (tipo) {
-      case "economia":
-        return { bg: "#FEF3C7", border: "#F59E0B", icon: "💡" };
-      case "padrão":
-        return { bg: "#DBEAFE", border: "#3B82F6", icon: "📊" };
-      case "alerta":
-        return { bg: "#FEE2E2", border: "#EF4444", icon: "⚠️" };
-      case "meta":
-        return { bg: "#DCFCE7", border: "#10B981", icon: "🎯" };
-      default:
-        return { bg: "#E0D9FF", border: "#6C47FF", icon: "💡" };
+  const loadInsights = async () => {
+    try {
+      const data = await financeApi.listInsightsByUser(token, userId);
+      setInsights(data || []);
+    } catch (error) {
+      Alert.alert("Erro", error.message);
     }
   };
 
-  return (
-    <SafeAreaView style={styles.safe} edges={["top"]}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F4F2FF" />
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadInsights();
+    }
+  }, [isAuthenticated, token, userId]);
 
-      <View style={styles.container}>
-        {/* HEADER */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitulo}>INSIGHTS IA</Text>
-          <TouchableOpacity style={styles.headerBtn}>
-            <Image style={styles.btn} source={SinoIcon} />
+  const createInsight = async () => {
+    if (!content) {
+      Alert.alert("Validação", "Escreva o insight.");
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      await financeApi.createInsight(token, {
+        userId: Number(userId),
+        insightType,
+        content,
+      });
+      setContent("");
+      await loadInsights();
+    } catch (error) {
+      Alert.alert("Erro", error.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (authLoading || !isAuthenticated) {
+    return null;
+  }
+
+  return (
+    <ThemedScreen contentContainerStyle={styles.container}>
+        <Text style={styles.title}>Insights de IA</Text>
+
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Registrar insight</Text>
+          <TextInput
+            style={[styles.input, styles.textArea]}
+            multiline
+            placeholder="Conteudo do insight"
+            value={content}
+            onChangeText={setContent}
+          />
+
+          <View style={styles.typeRow}>
+            {INSIGHT_TYPES.map((item) => (
+              <TouchableOpacity
+                key={item}
+                style={[styles.tag, insightType === item && styles.tagActive]}
+                onPress={() => setInsightType(item)}
+              >
+                <Text style={styles.tagText}>{formatType(item)}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <TouchableOpacity style={styles.primaryButton} onPress={createInsight} disabled={submitting}>
+            <Text style={styles.primaryButtonText}>{submitting ? "Salvando..." : "Salvar insight"}</Text>
           </TouchableOpacity>
         </View>
 
-        {/* CONTEÚDO PRINCIPAL */}
-        <ScrollView
-          style={styles.lista}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.listaConteudo}
-        >
-          {/* Card de Resumo */}
-          <View style={styles.cardResumo}>
-            <View style={styles.resumoHeader}>
-              <Text style={styles.resumoTitulo}>Resumo do Mês</Text>
-              <Text style={styles.resumoMes}>Maio 2024</Text>
-            </View>
-
-            <View style={styles.resumoStats}>
-              <View style={styles.resumoStat}>
-                <Text style={styles.resumoStatIcone}>📈</Text>
-                <View>
-                  <Text style={styles.resumoStatLabel}>Renda Total</Text>
-                  <Text style={styles.resumoStatValor}>R$ 4.500,00</Text>
-                </View>
-              </View>
-
-              <View style={styles.resumoStat}>
-                <Text style={styles.resumoStatIcone}>📉</Text>
-                <View>
-                  <Text style={styles.resumoStatLabel}>Gastos Totais</Text>
-                  <Text style={styles.resumoStatValor}>R$ 3.980,00</Text>
-                </View>
-              </View>
-
-              <View style={styles.resumoStat}>
-                <Text style={styles.resumoStatIcone}>💰</Text>
-                <View>
-                  <Text style={styles.resumoStatLabel}>Saldo</Text>
-                  <Text style={[styles.resumoStatValor, { color: "#10B981" }]}>
-                    R$ 520,00
-                  </Text>
-                </View>
-              </View>
-            </View>
+        {insights.map((insight) => (
+          <View key={String(insight.id)} style={styles.insightCard}>
+            <Text style={styles.insightType}>{formatType(insight.insightType)}</Text>
+            <Text style={styles.insightText}>{insight.content}</Text>
+            <Text style={styles.insightDate}>{insight.generatedAt}</Text>
           </View>
-
-          {/* Seção de Insights */}
-          <View style={styles.secaoHeader}>
-            <Text style={styles.secaoTitulo}>Insights Inteligentes</Text>
-            <View style={styles.badge}>
-              <Text style={styles.badgeTexto}>{INSIGHTS.length}</Text>
-            </View>
-          </View>
-
-          {INSIGHTS.map((insight) => {
-            const cores = obterCoresInsight(insight.tipo);
-            const estaExpandido = insightSelecionado === insight.id;
-
-            return (
-              <View key={insight.id}>
-                <TouchableOpacity
-                  style={[
-                    styles.cardInsight,
-                    { backgroundColor: cores.bg },
-                    { borderLeftColor: cores.border },
-                  ]}
-                  onPress={() =>
-                    setInsightSelecionado(
-                      estaExpandido ? null : insight.id
-                    )
-                  }
-                >
-                  <Text style={styles.insightIcone}>{insight.icone}</Text>
-                  <View style={styles.insightContent}>
-                    <Text style={styles.insightTitulo}>
-                      {insight.titulo}
-                    </Text>
-                    <Text style={styles.insightDescricao}>
-                      {insight.descricao}
-                    </Text>
-                  </View>
-                  <Text style={styles.expandirIcone}>
-                    {estaExpandido ? "▼" : "›"}
-                  </Text>
-                </TouchableOpacity>
-
-                {/* Seção Expandida */}
-                {estaExpandido && (
-                  <View style={styles.insightExpandido}>
-                    <Text style={styles.recomendacoesTitulo}>
-                      Recomendações
-                    </Text>
-                    {getInsightDetalhado(insight.id).recomendacoes.map(
-                      (rec, idx) => (
-                        <View key={idx} style={styles.recomendacao}>
-                          <Text style={styles.recomendacaoNumero}>
-                            {idx + 1}
-                          </Text>
-                          <Text style={styles.recomendacaoTexto}>
-                            {rec}
-                          </Text>
-                        </View>
-                      )
-                    )}
-                  </View>
-                )}
-              </View>
-            );
-          })}
-
-          {/* Seção de Análise por Categoria */}
-          <View style={[styles.secaoHeader, { marginTop: 28 }]}>
-            <Text style={styles.secaoTitulo}>Por Categoria</Text>
-            <View style={styles.badge}>
-              <Text style={styles.badgeTexto}>{CATEGORIAS_GASTOS.length}</Text>
-            </View>
-          </View>
-
-          {CATEGORIAS_GASTOS.map((cat) => (
-            <View key={cat.id} style={styles.analiseCategoria}>
-              <View style={styles.analiseCategoriaHeader}>
-                <View style={styles.analiseCategoriaLabel}>
-                  <Text
-                    style={[
-                      styles.analiseCategoriaIcone,
-                      { color: cat.cor },
-                    ]}
-                  >
-                    {cat.icone}
-                  </Text>
-                  <View>
-                    <Text style={styles.analiseCategoriaName}>{cat.nome}</Text>
-                    <Text style={styles.analiseCategoriaQtd}>
-                      {cat.qtd} transações
-                    </Text>
-                  </View>
-                </View>
-                <Text
-                  style={[
-                    styles.analiseCategoriaPercent,
-                    { color: cat.cor },
-                  ]}
-                >
-                  {cat.percent}%
-                </Text>
-              </View>
-              <View style={styles.progressBar}>
-                <View
-                  style={[
-                    styles.progressFill,
-                    { width: `${cat.percent}%`, backgroundColor: cat.cor },
-                  ]}
-                />
-              </View>
-            </View>
-          ))}
-
-          <View style={{ height: 100 }} />
-        </ScrollView>
-
-        {/* BARRA DE NAVEGAÇÃO */}
-        <View style={{ paddingBottom: insets.bottom }}>
-          <BarraDeNavegacao abaAtiva={abaAtiva} aoTocarAba={setAbaAtiva} />
-        </View>
-      </View>
-    </SafeAreaView>
+        ))}
+      <BarraDeNavegacao abaAtiva="home" />
+    </ThemedScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: "#F4F2FF",
-  },
-  container: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 8,
-  },
-  headerBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  btn: {
-    width: 23,
-    height: 23,
-  },
-  headerTitulo: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#1A1A2E",
-  },
-  lista: {
-    flex: 1,
-  },
-  listaConteudo: {
-    paddingHorizontal: 20,
-    paddingBottom: 100,
-  },
-  cardResumo: {
-    backgroundColor: "linear-gradient(135deg, #6C47FF 0%, #9B59B6 100%)",
-    borderRadius: 20,
-    padding: 20,
-    marginVertical: 16,
-    shadowColor: "#6C47FF",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 6,
-  },
-  resumoHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  resumoTitulo: {
-    color: "#FFFFFF",
-    fontSize: 18,
-    fontWeight: "700",
-  },
-  resumoMes: {
-    color: "rgba(255, 255, 255, 0.8)",
-    fontSize: 14,
-    fontWeight: "500",
-  },
-  resumoStats: {
-    gap: 12,
-  },
-  resumoStat: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    backgroundColor: "rgba(255, 255, 255, 0.15)",
-    borderRadius: 12,
-    padding: 12,
-  },
-  resumoStatIcone: {
-    fontSize: 24,
-  },
-  resumoStatLabel: {
-    color: "rgba(255, 255, 255, 0.7)",
-    fontSize: 12,
-    fontWeight: "500",
-  },
-  resumoStatValor: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "700",
-    marginTop: 4,
-  },
-  secaoHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginTop: 28,
-    marginBottom: 14,
-  },
-  secaoTitulo: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#1A1A2E",
-  },
-  badge: {
-    backgroundColor: "#E0D9FF",
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-  },
-  badgeTexto: {
-    color: "#6C47FF",
-    fontSize: 12,
-    fontWeight: "700",
-  },
-  cardInsight: {
-    backgroundColor: "#FEF3C7",
+  container: { paddingBottom: 110 },
+  title: { fontSize: 27, fontWeight: "800", color: COLORS.navy, marginBottom: 10 },
+  card: {
+    backgroundColor: COLORS.white,
     borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 12,
-    borderLeftWidth: 4,
-    borderLeftColor: "#F59E0B",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 1,
-  },
-  insightIcone: {
-    fontSize: 24,
-    marginTop: 2,
-  },
-  insightContent: {
-    flex: 1,
-  },
-  insightTitulo: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#1A1A2E",
-  },
-  insightDescricao: {
-    fontSize: 13,
-    color: "#6B5B3C",
-    marginTop: 4,
-    lineHeight: 18,
-  },
-  expandirIcone: {
-    fontSize: 18,
-    color: "#8E8E93",
-    fontWeight: "300",
-    marginTop: 2,
-  },
-  insightExpandido: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    marginHorizontal: 4,
     borderWidth: 1,
-    borderColor: "#E0D9FF",
-  },
-  recomendacoesTitulo: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#1A1A2E",
-    marginBottom: 12,
-  },
-  recomendacao: {
-    flexDirection: "row",
-    gap: 12,
-    marginBottom: 12,
-  },
-  recomendacaoNumero: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: "#E0D9FF",
-    color: "#6C47FF",
-    fontSize: 12,
-    fontWeight: "700",
-    textAlign: "center",
-    textAlignVertical: "center",
-  },
-  recomendacaoTexto: {
-    flex: 1,
-    fontSize: 13,
-    color: "#1A1A2E",
-    lineHeight: 20,
-  },
-  analiseCategoria: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
+    borderColor: COLORS.purple,
     padding: 12,
     marginBottom: 12,
-    shadowColor: "#6C47FF",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 1,
+    ...SHADOW,
   },
-  analiseCategoriaHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+  cardTitle: { fontSize: 16, fontWeight: "700", marginBottom: 8, color: COLORS.navy },
+  input: {
+    borderWidth: 1,
+    borderColor: COLORS.purple,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: 8,
+    backgroundColor: COLORS.white,
+  },
+  textArea: { minHeight: 92, textAlignVertical: "top" },
+  typeRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 8 },
+  tag: { backgroundColor: "#F3E8FF", borderRadius: 999, paddingHorizontal: 10, paddingVertical: 8 },
+  tagActive: { backgroundColor: COLORS.purple },
+  tagText: { color: COLORS.navy, fontWeight: "600", fontSize: 12 },
+  primaryButton: {
+    marginTop: 6,
+    backgroundColor: COLORS.indigo,
+    borderRadius: 10,
+    paddingVertical: 12,
     alignItems: "center",
+  },
+  primaryButtonText: { color: COLORS.white, fontWeight: "700" },
+  insightCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: COLORS.purple,
+    padding: 12,
     marginBottom: 8,
   },
-  analiseCategoriaLabel: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    flex: 1,
-  },
-  analiseCategoriaIcone: {
-    fontSize: 20,
-  },
-  analiseCategoriaName: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#1A1A2E",
-  },
-  analiseCategoriaQtd: {
-    fontSize: 11,
-    color: "#8E8E93",
-    marginTop: 2,
-  },
-  analiseCategoriaPercent: {
-    fontSize: 14,
-    fontWeight: "700",
-  },
-  progressBar: {
-    width: "100%",
-    height: 6,
-    backgroundColor: "#E0E0E0",
-    borderRadius: 3,
-    overflow: "hidden",
-  },
-  progressFill: {
-    height: "100%",
-  },
+  insightType: { color: COLORS.purple, fontWeight: "700", marginBottom: 4 },
+  insightText: { color: COLORS.navy, lineHeight: 20 },
+  insightDate: { marginTop: 5, fontSize: 12, color: COLORS.indigo },
 });

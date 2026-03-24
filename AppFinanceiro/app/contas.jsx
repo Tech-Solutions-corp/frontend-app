@@ -1,377 +1,170 @@
-import React, { useState } from "react";
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StatusBar,
-  StyleSheet,
-  Image,
-} from "react-native";
-
+import React, { useEffect, useMemo, useState } from "react";
+import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import BarraDeNavegacao from "../components/BarraDeNavegacao";
-import { CONTAS, USUARIO } from "../constants/mockData";
-import SinoIcon from "../assets/sino-icon.png";
+import { useAuth } from "../context/AuthContext";
+import { useRequireAuth } from "../hooks/useRequireAuth";
+import { financeApi } from "../services/financeApi";
+import ThemedScreen from "../components/ThemedScreen";
+import { COLORS, SHADOW } from "../constants/theme";
+
+const ACCOUNT_TYPES = ["WALLET", "BANK", "SAVINGS", "CREDIT_CARD", "INVESTMENT"];
+
+function money(value) {
+  return `R$ ${Number(value || 0).toFixed(2).replace(".", ",")}`;
+}
 
 export default function ContasScreen() {
-  const insets = useSafeAreaInsets();
-  const [abaAtiva, setAbaAtiva] = useState("contas");
+  const { loading: authLoading, isAuthenticated } = useRequireAuth();
+  const { token, userId } = useAuth();
 
-  const totalSaldo = CONTAS.reduce((acc, conta) => {
-    if (conta.tipo === "CREDIT_CARD") {
-      return acc - Math.abs(conta.saldo);
+  const [accounts, setAccounts] = useState([]);
+  const [name, setName] = useState("");
+  const [type, setType] = useState("WALLET");
+  const [balance, setBalance] = useState("0");
+  const [submitting, setSubmitting] = useState(false);
+
+  const loadAccounts = async () => {
+    try {
+      const data = await financeApi.listAccountsByUser(token, userId);
+      setAccounts(data || []);
+    } catch (error) {
+      Alert.alert("Erro", error.message);
     }
-    return acc + conta.saldo;
-  }, 0);
+  };
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadAccounts();
+    }
+  }, [isAuthenticated, token, userId]);
+
+  const total = useMemo(
+    () => accounts.reduce((acc, account) => acc + Number(account.balance || 0), 0),
+    [accounts]
+  );
+
+  const createAccount = async () => {
+    if (!name) {
+      Alert.alert("Validação", "Informe o nome da conta.");
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      await financeApi.createAccount(token, {
+        userId: Number(userId),
+        name,
+        type,
+        balance: Number(balance.replace(",", ".")),
+      });
+      setName("");
+      setBalance("0");
+      await loadAccounts();
+    } catch (error) {
+      Alert.alert("Erro", error.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (authLoading || !isAuthenticated) {
+    return null;
+  }
 
   return (
-    <SafeAreaView style={styles.safe} edges={["top"]}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F4F2FF" />
+    <ThemedScreen contentContainerStyle={styles.container}>
+        <Text style={styles.title}>Contas</Text>
+        <Text style={styles.total}>Saldo total: {money(total)}</Text>
 
-      <View style={styles.container}>
-        {/* HEADER */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitulo}>CONTAS</Text>
-          <TouchableOpacity style={styles.headerBtn}>
-            <Image style={styles.btn} source={SinoIcon} />
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Nova conta</Text>
+          <TextInput style={styles.input} placeholder="Nome da conta" value={name} onChangeText={setName} />
+          <TextInput
+            style={styles.input}
+            placeholder="Saldo inicial"
+            keyboardType="decimal-pad"
+            value={balance}
+            onChangeText={setBalance}
+          />
+
+          <View style={styles.types}>
+            {ACCOUNT_TYPES.map((item) => (
+              <TouchableOpacity
+                key={item}
+                style={[styles.tag, type === item && styles.tagActive]}
+                onPress={() => setType(item)}
+              >
+                <Text style={styles.tagText}>{item}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <TouchableOpacity style={styles.primaryButton} onPress={createAccount} disabled={submitting}>
+            <Text style={styles.primaryButtonText}>{submitting ? "Criando..." : "Criar conta"}</Text>
           </TouchableOpacity>
         </View>
 
-        {/* CONTEÚDO PRINCIPAL */}
-        <ScrollView
-          style={styles.lista}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.listaConteudo}
-        >
-          {/* Card de Saldo Total */}
-          <View style={styles.cardSaldoTotal}>
-            <Text style={styles.labelSaldo}>Saldo Total</Text>
-            <Text style={styles.totalSaldo}>
-              R$ {totalSaldo.toFixed(2).replace(".", ",")}
-            </Text>
-            <View style={styles.acoesBotoes}>
-              <TouchableOpacity style={styles.botaoAcao}>
-                <Text style={styles.botaoAcaoIcone}>➕</Text>
-                <Text style={styles.botaoAcaoTexto}>Adicionar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.botaoAcao}>
-                <Text style={styles.botaoAcaoIcone}>💸</Text>
-                <Text style={styles.botaoAcaoTexto}>Transferir</Text>
-              </TouchableOpacity>
+        {accounts.map((account) => (
+          <View key={String(account.id)} style={styles.accountItem}>
+            <View>
+              <Text style={styles.accountName}>{account.name}</Text>
+              <Text style={styles.accountMeta}>{account.type}</Text>
             </View>
+            <Text style={styles.accountBalance}>{money(account.balance)}</Text>
           </View>
-
-          {/* Seção de Contas */}
-          <View style={styles.secaoHeader}>
-            <Text style={styles.secaoTitulo}>Minhas Contas</Text>
-            <View style={styles.badge}>
-              <Text style={styles.badgeTexto}>{CONTAS.length}</Text>
-            </View>
-          </View>
-
-          {/* Lista de Contas */}
-          {CONTAS.map((conta) => (
-            <TouchableOpacity key={conta.id} style={styles.cardConta}>
-              <View
-                style={[
-                  styles.iconContainer,
-                  { backgroundColor: conta.cor + "20" },
-                ]}
-              >
-                <Text style={styles.contaIcone}>{conta.icone}</Text>
-              </View>
-              <View style={styles.contaInfo}>
-                <Text style={styles.contaNome}>{conta.nome}</Text>
-                <Text style={styles.contaTipo}>
-                  {conta.tipo === "WALLET"
-                    ? "Carteira"
-                    : conta.tipo === "BANK"
-                    ? "Banco"
-                    : conta.tipo === "SAVINGS"
-                    ? "Poupança"
-                    : "Cartão de Crédito"}
-                </Text>
-              </View>
-              <View style={styles.contaSaldo}>
-                <Text
-                  style={[
-                    styles.contaSaldoValor,
-                    {
-                      color:
-                        conta.tipo === "CREDIT_CARD"
-                          ? "#FF6B8A"
-                          : "#6C47FF",
-                    },
-                  ]}
-                >
-                  R$ {Math.abs(conta.saldo).toFixed(2).replace(".", ",")}
-                </Text>
-                {conta.ativa && (
-                  <View style={styles.statusBadge}>
-                    <View style={styles.statusDot} />
-                    <Text style={styles.statusTexto}>Ativa</Text>
-                  </View>
-                )}
-              </View>
-            </TouchableOpacity>
-          ))}
-
-          {/* Card de Limite Cartão */}
-          {CONTAS.filter((c) => c.tipo === "CREDIT_CARD").map((cartao) => (
-            <View key={cartao.id} style={styles.cardLimiteCreditoInfo}>
-              <View style={styles.limitoHeader}>
-                <Text style={styles.limitoTitulo}>{cartao.nome}</Text>
-                <Text style={styles.limitoValor}>
-                  R$ {cartao.limite.toFixed(2).replace(".", ",")}
-                </Text>
-              </View>
-              <View style={styles.progressBar}>
-                <View
-                  style={[
-                    styles.progressFill,
-                    {
-                      width: `${
-                        ((cartao.limite - Math.abs(cartao.saldo)) /
-                          cartao.limite) *
-                        100
-                      }%`,
-                    },
-                  ]}
-                />
-              </View>
-              <Text
-                style={styles.progressTexto}
-              >{`${(
-                ((cartao.limite - Math.abs(cartao.saldo)) / cartao.limite) *
-                100
-              ).toFixed(0)}% disponível`}</Text>
-            </View>
-          ))}
-
-          <View style={{ height: 100 }} />
-        </ScrollView>
-
-        {/* BARRA DE NAVEGAÇÃO */}
-        <View style={{ paddingBottom: insets.bottom }}>
-          <BarraDeNavegacao abaAtiva={abaAtiva} aoTocarAba={setAbaAtiva} />
-        </View>
-      </View>
-    </SafeAreaView>
+        ))}
+      <BarraDeNavegacao abaAtiva="agenda" />
+    </ThemedScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: "#F4F2FF",
-  },
-  container: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 8,
-  },
-  headerBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  btn: {
-    width: 23,
-    height: 23,
-  },
-  headerTitulo: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#1A1A2E",
-  },
-  lista: {
-    flex: 1,
-  },
-  listaConteudo: {
-    paddingHorizontal: 20,
-    paddingBottom: 100,
-  },
-  cardSaldoTotal: {
-    backgroundColor: "#6C47FF",
-    borderRadius: 20,
-    padding: 24,
-    marginVertical: 16,
-    shadowColor: "#6C47FF",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 6,
-  },
-  labelSaldo: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "500",
-    opacity: 0.8,
-  },
-  totalSaldo: {
-    color: "#FFFFFF",
-    fontSize: 36,
-    fontWeight: "700",
-    marginVertical: 12,
-  },
-  acoesBotoes: {
-    flexDirection: "row",
-    gap: 12,
-    marginTop: 20,
-  },
-  botaoAcao: {
-    flex: 1,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
-    borderRadius: 12,
-    paddingVertical: 10,
-    alignItems: "center",
-  },
-  botaoAcaoIcone: {
-    fontSize: 20,
-    marginBottom: 4,
-  },
-  botaoAcaoTexto: {
-    color: "#FFFFFF",
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  secaoHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginTop: 28,
+  container: { paddingBottom: 110 },
+  title: { fontSize: 27, fontWeight: "800", color: COLORS.navy },
+  total: { marginTop: 6, color: COLORS.indigo, marginBottom: 12, fontWeight: "700" },
+  card: {
+    backgroundColor: COLORS.white,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: COLORS.purple,
+    padding: 12,
     marginBottom: 14,
+    ...SHADOW,
   },
-  secaoTitulo: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#1A1A2E",
+  cardTitle: { fontSize: 16, fontWeight: "700", marginBottom: 8, color: COLORS.navy },
+  input: {
+    borderWidth: 1,
+    borderColor: COLORS.purple,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: 8,
+    backgroundColor: COLORS.white,
   },
-  badge: {
-    backgroundColor: "#E0D9FF",
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-  },
-  badgeTexto: {
-    color: "#6C47FF",
-    fontSize: 12,
-    fontWeight: "700",
-  },
-  cardConta: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    shadowColor: "#6C47FF",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 12,
-  },
-  contaIcone: {
-    fontSize: 24,
-  },
-  contaInfo: {
-    flex: 1,
-  },
-  contaNome: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#1A1A2E",
-  },
-  contaTipo: {
-    fontSize: 12,
-    color: "#8E8E93",
-    marginTop: 4,
-  },
-  contaSaldo: {
-    alignItems: "flex-end",
-  },
-  contaSaldoValor: {
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  statusBadge: {
-    flexDirection: "row",
-    alignItems: "center",
+  types: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 8 },
+  tag: { backgroundColor: "#F3E8FF", borderRadius: 999, paddingHorizontal: 10, paddingVertical: 8 },
+  tagActive: { backgroundColor: COLORS.purple },
+  tagText: { fontSize: 12, fontWeight: "600", color: COLORS.navy },
+  primaryButton: {
     marginTop: 6,
-    gap: 4,
+    backgroundColor: COLORS.indigo,
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: "center",
   },
-  statusDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: "#10B981",
-  },
-  statusTexto: {
-    fontSize: 10,
-    color: "#10B981",
-    fontWeight: "600",
-  },
-  cardLimiteCreditoInfo: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    padding: 16,
-    marginVertical: 12,
-    shadowColor: "#6C47FF",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  limitoHeader: {
+  primaryButtonText: { color: COLORS.white, fontWeight: "700" },
+  accountItem: {
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: COLORS.purple,
+    padding: 12,
+    marginBottom: 8,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 12,
   },
-  limitoTitulo: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#1A1A2E",
-  },
-  limitoValor: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#6C47FF",
-  },
-  progressBar: {
-    width: "100%",
-    height: 8,
-    backgroundColor: "#E0D9FF",
-    borderRadius: 4,
-    overflow: "hidden",
-  },
-  progressFill: {
-    height: "100%",
-    backgroundColor: "#6C47FF",
-  },
-  progressTexto: {
-    fontSize: 12,
-    color: "#8E8E93",
-    marginTop: 8,
-  },
+  accountName: { color: COLORS.navy, fontWeight: "600" },
+  accountMeta: { marginTop: 2, color: COLORS.indigo, fontSize: 12 },
+  accountBalance: { color: COLORS.navy, fontWeight: "700" },
 });

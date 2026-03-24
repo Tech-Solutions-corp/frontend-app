@@ -1,9 +1,11 @@
 // app/_layout.jsx
 import { Stack } from 'expo-router';
-import BarraDeNavegacao from '../components/BarraDeNavegacao';
+import { AuthProvider } from '../context/AuthContext';
 
 export default function Layout() {
   return (
-    <Stack screenOptions={{ headerShown: false }} />
+    <AuthProvider>
+      <Stack screenOptions={{ headerShown: false }} />
+    </AuthProvider>
   );
 }

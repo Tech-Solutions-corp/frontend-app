@@ -1,282 +1,156 @@
-import React, { useState } from "react";
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StatusBar,
-  StyleSheet,
-  Image,
-} from "react-native";
-
+import React, { useEffect, useMemo, useState } from "react";
+import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import BarraDeNavegacao from "../components/BarraDeNavegacao";
-import { CATEGORIAS_SISTEMA } from "../constants/mockData";
-import SinoIcon from "../assets/sino-icon.png";
+import { useRequireAuth } from "../hooks/useRequireAuth";
+import { useAuth } from "../context/AuthContext";
+import { financeApi } from "../services/financeApi";
+import ThemedScreen from "../components/ThemedScreen";
+import { COLORS, SHADOW } from "../constants/theme";
 
 export default function CategoriasScreen() {
-  const insets = useSafeAreaInsets();
-  const [abaAtiva, setAbaAtiva] = useState("categorias");
-  const [categoriaSelecionada, setCategoriaSelecionada] = useState(null);
+  const { loading: authLoading, isAuthenticated } = useRequireAuth();
+  const { token, userId } = useAuth();
 
-  const categoriasRendas = CATEGORIAS_SISTEMA.filter(
-    (c) => c.tipo === "INCOME"
-  );
-  const categoriasGastos = CATEGORIAS_SISTEMA.filter(
-    (c) => c.tipo === "EXPENSE"
+  const [categories, setCategories] = useState([]);
+  const [name, setName] = useState("");
+  const [type, setType] = useState("EXPENSE");
+  const [submitting, setSubmitting] = useState(false);
+
+  const loadCategories = async () => {
+    try {
+      const data = await financeApi.listCategoriesByUser(token, userId);
+      setCategories(data || []);
+    } catch (error) {
+      Alert.alert("Erro", error.message);
+    }
+  };
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadCategories();
+    }
+  }, [isAuthenticated, token, userId]);
+
+  const grouped = useMemo(
+    () => ({
+      expense: categories.filter((c) => c.type === "EXPENSE"),
+      income: categories.filter((c) => c.type === "INCOME"),
+    }),
+    [categories]
   );
 
-  const renderCategoria = (categoria) => (
-    <TouchableOpacity
-      key={categoria.id}
-      style={[
-        styles.cardCategoria,
-        categoriaSelecionada === categoria.id && styles.categoriaSelecionada,
-      ]}
-      onPress={() => setCategoriaSelecionada(categoria.id)}
-    >
-      <View
-        style={[
-          styles.categoriaIconContainer,
-          { backgroundColor: categoria.cor + "20" },
-        ]}
-      >
-        <Text style={styles.categoriaIcone}>{categoria.icone}</Text>
-      </View>
-      <View style={styles.categoriaInfo}>
-        <Text style={styles.categoriaNome}>{categoria.nome}</Text>
-      </View>
-      <Text style={styles.categoriaEditar}>›</Text>
-    </TouchableOpacity>
-  );
+  const createCategory = async () => {
+    if (!name) {
+      Alert.alert("Validação", "Informe o nome da categoria.");
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      await financeApi.createCategory(token, {
+        userId: Number(userId),
+        name,
+        type,
+      });
+      setName("");
+      await loadCategories();
+    } catch (error) {
+      Alert.alert("Erro", error.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (authLoading || !isAuthenticated) {
+    return null;
+  }
 
   return (
-    <SafeAreaView style={styles.safe} edges={["top"]}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F4F2FF" />
+    <ThemedScreen contentContainerStyle={styles.container}>
+        <Text style={styles.title}>Categorias</Text>
 
-      <View style={styles.container}>
-        {/* HEADER */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitulo}>CATEGORIAS</Text>
-          <TouchableOpacity style={styles.headerBtn}>
-            <Image style={styles.btn} source={SinoIcon} />
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Nova categoria</Text>
+          <TextInput style={styles.input} placeholder="Nome" value={name} onChangeText={setName} />
+          <View style={styles.row}>
+            <TouchableOpacity
+              style={[styles.tag, type === "EXPENSE" && styles.tagActive]}
+              onPress={() => setType("EXPENSE")}
+            >
+              <Text style={styles.tagText}>Despesa</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.tag, type === "INCOME" && styles.tagActive]}
+              onPress={() => setType("INCOME")}
+            >
+              <Text style={styles.tagText}>Receita</Text>
+            </TouchableOpacity>
+          </View>
+          <TouchableOpacity style={styles.primaryButton} onPress={createCategory} disabled={submitting}>
+            <Text style={styles.primaryButtonText}>{submitting ? "Criando..." : "Criar categoria"}</Text>
           </TouchableOpacity>
         </View>
 
-        {/* CONTEÚDO PRINCIPAL */}
-        <ScrollView
-          style={styles.lista}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.listaConteudo}
-        >
-          {/* Botão para Adicionar Categoria */}
-          <TouchableOpacity style={styles.botaoAdicionarCategoria}>
-            <Text style={styles.botaoAdicionarIcone}>＋</Text>
-            <Text style={styles.botaoAdicionarTexto}>Nova Categoria</Text>
-          </TouchableOpacity>
-
-          {/* Seção de Categorias de Despesa */}
-          <View style={styles.secaoHeader}>
-            <Text style={styles.secaoTitulo}>Despesas</Text>
-            <View style={styles.badge}>
-              <Text style={styles.badgeTexto}>{categoriasGastos.length}</Text>
-            </View>
+        <Text style={styles.section}>Despesas</Text>
+        {grouped.expense.map((item) => (
+          <View key={String(item.id)} style={styles.item}>
+            <Text style={styles.itemText}>{item.name}</Text>
           </View>
+        ))}
 
-          {categoriasGastos.map((cat) => renderCategoria(cat))}
-
-          {/* Seção de Categorias de Renda */}
-          <View style={[styles.secaoHeader, { marginTop: 28 }]}>
-            <Text style={styles.secaoTitulo}>Rendas</Text>
-            <View style={styles.badge}>
-              <Text style={styles.badgeTexto}>{categoriasRendas.length}</Text>
-            </View>
+        <Text style={styles.section}>Receitas</Text>
+        {grouped.income.map((item) => (
+          <View key={String(item.id)} style={styles.item}>
+            <Text style={styles.itemText}>{item.name}</Text>
           </View>
-
-          {categoriasRendas.map((cat) => renderCategoria(cat))}
-
-          {/* Info Box */}
-          <View style={styles.infoBox}>
-            <Text style={styles.infoIcone}>💡</Text>
-            <View style={styles.infoContent}>
-              <Text style={styles.infoTitulo}>Dica de Organização</Text>
-              <Text style={styles.infoTexto}>
-                Organize suas categorias para melhor rastrear seus gastos e
-                entender seus padrões de consumo.
-              </Text>
-            </View>
-          </View>
-
-          <View style={{ height: 100 }} />
-        </ScrollView>
-
-        {/* BARRA DE NAVEGAÇÃO */}
-        <View style={{ paddingBottom: insets.bottom }}>
-          <BarraDeNavegacao abaAtiva={abaAtiva} aoTocarAba={setAbaAtiva} />
-        </View>
-      </View>
-    </SafeAreaView>
+        ))}
+      <BarraDeNavegacao abaAtiva="home" />
+    </ThemedScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: "#F4F2FF",
-  },
-  container: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 8,
-  },
-  headerBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  btn: {
-    width: 23,
-    height: 23,
-  },
-  headerTitulo: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#1A1A2E",
-  },
-  lista: {
-    flex: 1,
-  },
-  listaConteudo: {
-    paddingHorizontal: 20,
-    paddingBottom: 100,
-  },
-  botaoAdicionarCategoria: {
-    backgroundColor: "#6C47FF",
+  container: { paddingBottom: 110 },
+  title: { fontSize: 27, fontWeight: "800", color: COLORS.navy, marginBottom: 10 },
+  card: {
+    backgroundColor: COLORS.white,
     borderRadius: 16,
-    padding: 16,
-    marginVertical: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 12,
-    shadowColor: "#6C47FF",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  botaoAdicionarIcone: {
-    color: "#FFFFFF",
-    fontSize: 20,
-    fontWeight: "700",
-  },
-  botaoAdicionarTexto: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  secaoHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginTop: 16,
+    borderWidth: 1,
+    borderColor: COLORS.purple,
+    padding: 12,
     marginBottom: 12,
+    ...SHADOW,
   },
-  secaoTitulo: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#1A1A2E",
+  cardTitle: { fontSize: 16, fontWeight: "700", marginBottom: 8, color: COLORS.navy },
+  input: {
+    borderWidth: 1,
+    borderColor: COLORS.purple,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: 8,
+    backgroundColor: COLORS.white,
   },
-  badge: {
-    backgroundColor: "#E0D9FF",
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-  },
-  badgeTexto: {
-    color: "#6C47FF",
-    fontSize: 12,
-    fontWeight: "700",
-  },
-  cardCategoria: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
-    flexDirection: "row",
+  row: { flexDirection: "row", gap: 8, marginBottom: 8 },
+  tag: { backgroundColor: "#F3E8FF", borderRadius: 999, paddingHorizontal: 10, paddingVertical: 8 },
+  tagActive: { backgroundColor: COLORS.purple },
+  tagText: { color: COLORS.navy, fontWeight: "600", fontSize: 12 },
+  primaryButton: {
+    marginTop: 6,
+    backgroundColor: COLORS.indigo,
+    borderRadius: 10,
+    paddingVertical: 12,
     alignItems: "center",
-    shadowColor: "#6C47FF",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 2,
-    borderWidth: 2,
-    borderColor: "transparent",
   },
-  categoriaSelecionada: {
-    borderColor: "#6C47FF",
-    backgroundColor: "#F9F7FF",
-  },
-  categoriaIconContainer: {
-    width: 48,
-    height: 48,
+  primaryButtonText: { color: COLORS.white, fontWeight: "700" },
+  section: { marginTop: 12, marginBottom: 6, fontSize: 16, fontWeight: "700", color: COLORS.navy },
+  item: {
+    backgroundColor: COLORS.white,
     borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 12,
+    borderWidth: 1,
+    borderColor: COLORS.purple,
+    padding: 12,
+    marginBottom: 8,
   },
-  categoriaIcone: {
-    fontSize: 24,
-  },
-  categoriaInfo: {
-    flex: 1,
-  },
-  categoriaNome: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#1A1A2E",
-  },
-  categoriaEditar: {
-    fontSize: 24,
-    color: "#C7C7CC",
-    fontWeight: "300",
-  },
-  infoBox: {
-    backgroundColor: "#FEF3C7",
-    borderRadius: 16,
-    padding: 16,
-    marginVertical: 24,
-    flexDirection: "row",
-    gap: 12,
-    borderLeftWidth: 4,
-    borderLeftColor: "#F59E0B",
-  },
-  infoIcone: {
-    fontSize: 24,
-  },
-  infoContent: {
-    flex: 1,
-  },
-  infoTitulo: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#1A1A2E",
-  },
-  infoTexto: {
-    fontSize: 12,
-    color: "#6B5B3C",
-    marginTop: 4,
-    lineHeight: 18,
-  },
+  itemText: { color: COLORS.navy, fontWeight: "600" },
 });

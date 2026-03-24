@@ -1,7 +1,5 @@
-// app/gastos.jsx
 import React, { useState } from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   View,
   Text,
@@ -9,15 +7,12 @@ import {
   TouchableOpacity,
   StatusBar,
   StyleSheet,
-  Image,
 } from "react-native";
 
 import BarraDeNavegacao from "../components/BarraDeNavegacao";
 import CarrosselDeDatas from "../components/CarrosselDeDatas";
 import FiltroDeCategorias from "../components/FiltroDeCategorias";
 import CartaoDeGasto from "../components/CartaoDeGasto";
-
-import SinoIcon from "../assets/sino-icon.png";
 
 import {
   DATAS,
@@ -26,41 +21,38 @@ import {
   GASTOS,
 } from "../constants/mockData";
 
-export default function GastosScreen() {
+export default function AgendaScreen() {
   const insets = useSafeAreaInsets();
 
   const [indiceDateSelecionado, setIndiceDateSelecionado] = useState(
     INDICE_DIA_SELECIONADO,
   );
   const [categoriaSelecionada, setCategoriaSelecionada] = useState("All");
-  const [abaAtiva, setAbaAtiva] = useState("gastos");
-  
+  const [abaAtiva, setAbaAtiva] = useState("agenda");
+
   const gastosFiltrados =
     categoriaSelecionada === "All"
       ? GASTOS
       : GASTOS.filter((g) => g.categoria === categoriaSelecionada);
 
   return (
-    <SafeAreaView style={styles.safe} edges={[`top`]}>
+    <SafeAreaView style={styles.safe} edges={["top"]}>
       <StatusBar barStyle="dark-content" backgroundColor="#F4F2FF" />
 
       <View style={styles.container}>
-        {/* HEADER */}
         <View style={styles.header}>
           <Text style={styles.headerTitulo}>AGENDA</Text>
           <TouchableOpacity style={styles.headerBtn}>
-            <Image style={styles.btn} source={SinoIcon}/>
+            <Text style={styles.headerIcone}>🔔</Text>
           </TouchableOpacity>
         </View>
 
-        {/* CARROSSEL DE DATAS */}
         <CarrosselDeDatas
           datas={DATAS}
           indiceSelecionado={indiceDateSelecionado}
           aoSelecionarData={setIndiceDateSelecionado}
         />
 
-        {/* FILTRO DE CATEGORIAS */}
         <View style={styles.filtroWrapper}>
           <FiltroDeCategorias
             categorias={CATEGORIAS}
@@ -69,7 +61,6 @@ export default function GastosScreen() {
           />
         </View>
 
-        {/* LISTA DE GASTOS */}
         <ScrollView
           style={styles.lista}
           showsVerticalScrollIndicator={false}
@@ -80,12 +71,6 @@ export default function GastosScreen() {
           ))}
         </ScrollView>
 
-        {/* BOTÃO FLUTUANTE (FAB) */}
-        {/* <TouchableOpacity style={styles.fab} activeOpacity={0.85}>
-          <Text style={styles.fabIcone}>＋</Text>
-        </TouchableOpacity> */}
-
-        {/* BARRA DE NAVEGAÇÃO */}
         <View style={{ paddingBottom: insets.bottom }}>
           <BarraDeNavegacao abaAtiva={abaAtiva} aoTocarAba={setAbaAtiva} />
         </View>
@@ -114,12 +99,14 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
+    backgroundColor: "#FFFFFF",
     alignItems: "center",
-    justifyContent: "center"
-  },
-  btn: {
-    width: 23,
-    height: 23
+    justifyContent: "center",
+    shadowColor: "#6C47FF",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 3,
   },
   headerIcone: {
     fontSize: 18,
@@ -138,26 +125,5 @@ const styles = StyleSheet.create({
   },
   listaConteudo: {
     paddingBottom: 100,
-  },
-  fab: {
-    position: "absolute",
-    bottom: 75,
-    alignSelf: "center",
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "#6C47FF",
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#6C47FF",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4,
-    shadowRadius: 10,
-    elevation: 8,
-  },
-  fabIcone: {
-    fontSize: 28,
-    color: "#FFFFFF",
-    lineHeight: 32,
   },
 });
