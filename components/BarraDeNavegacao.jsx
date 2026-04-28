@@ -30,8 +30,7 @@ const BarraDeNavegacao = ({ abaAtiva = "home" }) => {
   };
 
   const handlePress = (abaId) => {
-    console.log("Navegando para:", abaId, ROTAS[abaId]);
-    router.push(ROTAS[abaId]);
+    router.replace(ROTAS[abaId]);
   };
 
   return (

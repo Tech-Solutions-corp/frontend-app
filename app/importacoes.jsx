@@ -7,15 +7,12 @@ import { financeApi } from "../services/financeApi";
 import ThemedScreen from "../components/ThemedScreen";
 import { COLORS, SHADOW } from "../constants/theme";
 
-const IMPORT_STATUS = ["PROCESSING", "COMPLETED", "FAILED"];
-
 export default function ImportacoesScreen() {
   const { loading: authLoading, isAuthenticated } = useRequireAuth();
   const { token, userId } = useAuth();
 
   const [imports, setImports] = useState([]);
   const [fileName, setFileName] = useState("");
-  const [status, setStatus] = useState("PROCESSING");
   const [submitting, setSubmitting] = useState(false);
 
   const loadImports = async () => {
@@ -44,7 +41,6 @@ export default function ImportacoesScreen() {
       await financeApi.createImport(token, {
         userId: Number(userId),
         fileName,
-        status,
       });
       setFileName("");
       await loadImports();
@@ -71,18 +67,6 @@ export default function ImportacoesScreen() {
             value={fileName}
             onChangeText={setFileName}
           />
-
-          <View style={styles.row}>
-            {IMPORT_STATUS.map((item) => (
-              <TouchableOpacity
-                key={item}
-                style={[styles.tag, status === item && styles.tagActive]}
-                onPress={() => setStatus(item)}
-              >
-                <Text style={styles.tagText}>{item}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
 
           <TouchableOpacity style={styles.primaryButton} onPress={createImport} disabled={submitting}>
             <Text style={styles.primaryButtonText}>{submitting ? "Salvando..." : "Salvar"}</Text>

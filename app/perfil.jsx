@@ -48,6 +48,27 @@ export default function PerfilScreen() {
 
         <TouchableOpacity
           style={styles.secondaryButton}
+          onPress={() => router.push("/contas")}
+        >
+          <Text style={styles.secondaryButtonText}>Minhas contas</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.secondaryButton}
+          onPress={() => router.push("/categorias")}
+        >
+          <Text style={styles.secondaryButtonText}>Minhas categorias</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.secondaryButton}
+          onPress={() => router.push("/agenda")}
+        >
+          <Text style={styles.secondaryButtonText}>Agenda financeira</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.secondaryButton}
           onPress={() => router.push("/insights")}
         >
           <Text style={styles.secondaryButtonText}>Tela de insights IA</Text>
