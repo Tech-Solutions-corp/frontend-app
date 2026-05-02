@@ -1,15 +1,34 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { router } from "expo-router";
-import BarraDeNavegacao from "../components/BarraDeNavegacao";
 import { useRequireAuth } from "../hooks/useRequireAuth";
 import { useAuth } from "../context/AuthContext";
+import { financeApi } from "../services/financeApi";
 import ThemedScreen from "../components/ThemedScreen";
 import { COLORS, SHADOW } from "../constants/theme";
+import { formatDateTime } from "../utils/dateFormatter";
 
 export default function PerfilScreen() {
   const { loading: authLoading, isAuthenticated } = useRequireAuth();
-  const { userEmail, userId, logout } = useAuth();
+  const { token, userEmail, userId, userName, logout } = useAuth();
+  const [profile, setProfile] = useState(null);
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      if (!isAuthenticated || !token) {
+        return;
+      }
+
+      try {
+        const currentUser = await financeApi.getCurrentUser(token);
+        setProfile(currentUser);
+      } catch {
+        setProfile(null);
+      }
+    };
+
+    loadProfile();
+  }, [isAuthenticated, token]);
 
   const onLogout = async () => {
     await logout();
@@ -22,69 +41,104 @@ export default function PerfilScreen() {
 
   return (
     <ThemedScreen contentContainerStyle={styles.container}>
-        <Text style={styles.title}>Perfil</Text>
+      <Text style={styles.title}>Perfil</Text>
 
-        <View style={styles.card}>
-          <Text style={styles.label}>Email</Text>
-          <Text style={styles.value}>{userEmail || "Nao informado"}</Text>
+      <View style={styles.card}>
+        <Text style={styles.label}>Nome</Text>
+        <Text style={styles.value}>
+          {profile?.name || userName || "Não Informado"}
+        </Text>
 
-          <Text style={[styles.label, { marginTop: 10 }]}>ID do usuario</Text>
-          <Text style={styles.value}>{userId || "-"}</Text>
-        </View>
+        <Text style={[styles.label, { marginTop: 10 }]}>E-mail</Text>
+        <Text style={styles.value}>
+          {profile?.email || userEmail || "Não Informado"}
+        </Text>
 
-        <TouchableOpacity
-          style={styles.secondaryButton}
-          onPress={() => router.push("/recuperar-senha")}
-        >
-          <Text style={styles.secondaryButtonText}>Recuperar senha por email</Text>
-        </TouchableOpacity>
+        <Text style={[styles.label, { marginTop: 10 }]}>ID Do Usuário</Text>
+        <Text style={styles.value}>{profile?.id || userId || "-"}</Text>
 
-        <TouchableOpacity
-          style={styles.secondaryButton}
-          onPress={() => router.push("/importacoes")}
-        >
-          <Text style={styles.secondaryButtonText}>Historico de importacoes</Text>
-        </TouchableOpacity>
+        <Text style={[styles.label, { marginTop: 10 }]}>Criado Em</Text>
+        <Text style={styles.value}>
+          {profile?.createdAt ? formatDateTime(profile.createdAt) : "-"}
+        </Text>
 
-        <TouchableOpacity
-          style={styles.secondaryButton}
-          onPress={() => router.push("/contas")}
-        >
-          <Text style={styles.secondaryButtonText}>Minhas contas</Text>
-        </TouchableOpacity>
+        <Text style={[styles.label, { marginTop: 10 }]}>Atualizado Em</Text>
+        <Text style={styles.value}>
+          {profile?.updatedAt ? formatDateTime(profile.updatedAt) : "-"}
+        </Text>
+      </View>
 
-        <TouchableOpacity
-          style={styles.secondaryButton}
-          onPress={() => router.push("/categorias")}
-        >
-          <Text style={styles.secondaryButtonText}>Minhas categorias</Text>
-        </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.secondaryButton}
+        onPress={() => router.push("/alterar-email")}
+      >
+        <Text style={styles.secondaryButtonText}>Alterar Email</Text>
+      </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.secondaryButton}
-          onPress={() => router.push("/agenda")}
-        >
-          <Text style={styles.secondaryButtonText}>Agenda financeira</Text>
-        </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.secondaryButton}
+        onPress={() => router.push("/alterar-senha")}
+      >
+        <Text style={styles.secondaryButtonText}>Alterar Senha</Text>
+      </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.secondaryButton}
-          onPress={() => router.push("/insights")}
-        >
-          <Text style={styles.secondaryButtonText}>Tela de insights IA</Text>
-        </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.secondaryButton}
+        onPress={() => router.push("/importacoes")}
+      >
+        <Text style={styles.secondaryButtonText}>Histórico De Importações</Text>
+      </TouchableOpacity>
 
-        <TouchableOpacity style={styles.logoutButton} onPress={onLogout}>
-          <Text style={styles.logoutButtonText}>Sair da conta</Text>
-        </TouchableOpacity>
-      <BarraDeNavegacao abaAtiva="perfil" />
+      <TouchableOpacity
+        style={styles.secondaryButton}
+        onPress={() => router.push("/contas")}
+      >
+        <Text style={styles.secondaryButtonText}>Minhas Contas</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.secondaryButton}
+        onPress={() => router.push("/categorias")}
+      >
+        <Text style={styles.secondaryButtonText}>Minhas Categorias</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.secondaryButton}
+        onPress={() => router.push("/limite-mensal")}
+      >
+        <Text style={styles.secondaryButtonText}>Limite Mensal</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.secondaryButton}
+        onPress={() => router.push("/agenda")}
+      >
+        <Text style={styles.secondaryButtonText}>Agenda Financeira</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.secondaryButton}
+        onPress={() => router.push("/insights")}
+      >
+        <Text style={styles.secondaryButtonText}>Tela De Insights IA</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.logoutButton} onPress={onLogout}>
+        <Text style={styles.logoutButtonText}>Sair Da Conta</Text>
+      </TouchableOpacity>
     </ThemedScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { paddingBottom: 110 },
-  title: { fontSize: 27, fontWeight: "800", color: COLORS.navy, marginBottom: 10 },
+  container: {},
+  title: {
+    fontSize: 27,
+    fontWeight: "800",
+    color: COLORS.navy,
+    marginBottom: 10,
+  },
   card: {
     backgroundColor: COLORS.white,
     borderRadius: 16,

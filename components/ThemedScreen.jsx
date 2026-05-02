@@ -14,8 +14,16 @@ export default function ThemedScreen({
 
   useEffect(() => {
     Animated.parallel([
-      Animated.timing(opacity, { toValue: 1, duration: 360, useNativeDriver: true }),
-      Animated.timing(translateY, { toValue: 0, duration: 360, useNativeDriver: true }),
+      Animated.timing(opacity, {
+        toValue: 1,
+        duration: 360,
+        useNativeDriver: true,
+      }),
+      Animated.timing(translateY, {
+        toValue: 0,
+        duration: 360,
+        useNativeDriver: true,
+      }),
     ]).start();
   }, [opacity, translateY]);
 
@@ -24,13 +32,24 @@ export default function ThemedScreen({
       <View style={styles.bgBlobTop} />
       <View style={styles.bgBlobBottom} />
 
-      <Animated.View style={[styles.animatedLayer, { opacity, transform: [{ translateY }] }]}> 
+      <Animated.View
+        style={[styles.animatedLayer, { opacity, transform: [{ translateY }] }]}
+      >
         {scroll ? (
-          <ScrollView contentContainerStyle={[styles.scrollContent, contentContainerStyle]}>
+          <ScrollView
+            contentContainerStyle={[
+              styles.scrollContent,
+              contentContainerStyle,
+            ]}
+            bounces={false}
+            overScrollMode="never"
+          >
             {children}
           </ScrollView>
         ) : (
-          <View style={[styles.fullContent, contentContainerStyle]}>{children}</View>
+          <View style={[styles.fullContent, contentContainerStyle]}>
+            {children}
+          </View>
         )}
       </Animated.View>
     </SafeAreaView>
@@ -47,7 +66,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 18,
-    paddingBottom: 110,
+    paddingBottom: 18,
   },
   fullContent: {
     flex: 1,

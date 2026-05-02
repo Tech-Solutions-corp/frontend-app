@@ -1,17 +1,29 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { View, Text, ScrollView, TouchableOpacity, StatusBar, StyleSheet, Alert } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  View,
+  Text,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Alert,
+} from "react-native";
 
-import BarraDeNavegacao from "../components/BarraDeNavegacao";
 import CarrosselDeDatas from "../components/CarrosselDeDatas";
 import FiltroDeCategorias from "../components/FiltroDeCategorias";
 import CartaoDeGasto from "../components/CartaoDeGasto";
 import { useAuth } from "../context/AuthContext";
 import { useRequireAuth } from "../hooks/useRequireAuth";
 import { financeApi } from "../services/financeApi";
+import { formatTime, formatDate } from "../utils/dateFormatter";
+import ThemedScreen from "../components/ThemedScreen";
+import NotificationBell from "../components/NotificationBell";
+import { COLORS } from "../constants/theme";
 
 function formatMoney(value) {
-  return `R$ ${Number(value || 0).toFixed(2).replace(".", ",")}`;
+  return `R$ ${Number(value || 0)
+    .toFixed(2)
+    .replace(".", ",")}`;
 }
 
 function toDateItem(dateValue) {
@@ -20,21 +32,19 @@ function toDateItem(dateValue) {
     return null;
   }
 
+  const capitalizeFirst = (value = "") => {
+    const text = String(value);
+    return text.charAt(0).toUpperCase() + text.slice(1);
+  };
+
   return {
     dia: date.getDate(),
-    diaSemana: date.toLocaleDateString("pt-BR", { weekday: "long" }),
-    mes: date.toLocaleDateString("pt-BR", { month: "long" }),
+    diaSemana: capitalizeFirst(
+      date.toLocaleDateString("pt-BR", { weekday: "long" }),
+    ),
+    mes: capitalizeFirst(date.toLocaleDateString("pt-BR", { month: "long" })),
     raw: dateValue,
   };
-}
-
-function formatTime(dateTimeValue) {
-  if (!dateTimeValue) {
-    return "--:--";
-  }
-
-  const timePart = String(dateTimeValue).split("T")[1] || "";
-  return timePart.slice(0, 5) || "--:--";
 }
 
 export default function AgendaScreen() {
@@ -62,7 +72,7 @@ export default function AgendaScreen() {
         setTransactions(transactionData || []);
         setCategories(categoryData || []);
       } catch (error) {
-        Alert.alert("Erro", error.message);
+        // Erro já foi exibido pelo apiClient
       }
     };
 
@@ -72,14 +82,11 @@ export default function AgendaScreen() {
   }, [isAuthenticated, token, userId]);
 
   const dateItems = useMemo(() => {
-    const uniqueDates = Array.from(new Set(transactions.map((transaction) => transaction.transactionDate))).sort((left, right) =>
-      String(right).localeCompare(String(left))
-    );
+    const uniqueDates = Array.from(
+      new Set(transactions.map((transaction) => transaction.transactionDate)),
+    ).sort((left, right) => String(right).localeCompare(String(left)));
 
-    return uniqueDates
-      .map(toDateItem)
-      .filter(Boolean)
-      .slice(0, 8);
+    return uniqueDates.map(toDateItem).filter(Boolean).slice(0, 8);
   }, [transactions]);
 
   useEffect(() => {
@@ -92,21 +99,30 @@ export default function AgendaScreen() {
 
   const categoryNames = useMemo(
     () => ["Todas", ...categories.map((category) => category.name)],
-    [categories]
+    [categories],
   );
 
   const gastosFiltrados = useMemo(() => {
     return transactions
-      .filter((transaction) => !selectedDate || transaction.transactionDate === selectedDate)
+      .filter(
+        (transaction) =>
+          !selectedDate || transaction.transactionDate === selectedDate,
+      )
       .filter((transaction) => {
         if (categoriaSelecionada === "Todas") {
           return true;
         }
 
-        const category = categories.find((item) => String(item.id) === String(transaction.categoryId));
+        const category = categories.find(
+          (item) => String(item.id) === String(transaction.categoryId),
+        );
         return category?.name === categoriaSelecionada;
       })
-      .sort((left, right) => String(right.createdAt || right.transactionDate).localeCompare(String(left.createdAt || left.transactionDate)));
+      .sort((left, right) =>
+        String(right.createdAt || right.transactionDate).localeCompare(
+          String(left.createdAt || left.transactionDate),
+        ),
+      );
   }, [transactions, selectedDate, categoriaSelecionada, categories]);
 
   if (authLoading || !isAuthenticated) {
@@ -114,15 +130,13 @@ export default function AgendaScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safe} edges={["top"]}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F4F2FF" />
+    <ThemedScreen>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.page} />
 
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.headerTitulo}>AGENDA</Text>
-          <TouchableOpacity style={styles.headerBtn}>
-            <Text style={styles.headerIcone}>🔔</Text>
-          </TouchableOpacity>
+          <Text style={styles.headerTitulo}>Agenda</Text>
+          <NotificationBell />
         </View>
 
         <CarrosselDeDatas
@@ -143,18 +157,22 @@ export default function AgendaScreen() {
           style={styles.lista}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.listaConteudo}
+          bounces={false}
+          overScrollMode="never"
         >
           {gastosFiltrados.length > 0 ? (
             gastosFiltrados.map((gasto) => {
-              const category = categories.find((item) => String(item.id) === String(gasto.categoryId));
-              const categoryName = category?.name || "Sem categoria";
+              const category = categories.find(
+                (item) => String(item.id) === String(gasto.categoryId),
+              );
+              const categoryName = category?.name || "Sem Categoria";
               const isIncome = gasto.transactionType === "INCOME";
 
               return (
                 <CartaoDeGasto
                   key={String(gasto.id)}
                   loja={categoryName}
-                  descricao={gasto.transactionDescription || "Sem descrição"}
+                  descricao={gasto.transactionDescription || "Sem Descrição"}
                   horario={formatTime(gasto.createdAt)}
                   valor={`${isIncome ? "+" : "-"} ${formatMoney(gasto.amount)}`}
                   icone={isIncome ? "↑" : "↓"}
@@ -163,15 +181,15 @@ export default function AgendaScreen() {
               );
             })
           ) : (
-            <Text style={styles.emptyState}>Nenhuma transação encontrada para este filtro.</Text>
+            <Text style={styles.emptyState}>
+              Nenhuma Transação Encontrada Para Este Filtro.
+            </Text>
           )}
         </ScrollView>
 
-        <View style={{ paddingBottom: insets.bottom }}>
-          <BarraDeNavegacao abaAtiva="agenda" />
-        </View>
+        <View style={{ paddingBottom: insets.bottom }} />
       </View>
-    </SafeAreaView>
+    </ThemedScreen>
   );
 }
 
@@ -220,7 +238,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   listaConteudo: {
-    paddingBottom: 100,
+    paddingBottom: 18,
   },
   emptyState: {
     paddingHorizontal: 20,

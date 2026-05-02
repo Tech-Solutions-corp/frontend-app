@@ -9,50 +9,80 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { useAuth } from "../context/AuthContext";
+import { useRequireAuth } from "../hooks/useRequireAuth";
 import ThemedScreen from "../components/ThemedScreen";
 import { COLORS, SHADOW } from "../constants/theme";
 
-export default function RecuperarSenhaScreen() {
-  const { forgotPassword } = useAuth();
-  const [email, setEmail] = useState("");
+export default function AlterarSenhaScreen() {
+  const { loading: authLoading, isAuthenticated } = useRequireAuth();
+  const { changePassword } = useAuth();
+
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async () => {
-    if (!email) {
-      Alert.alert("Validação", "Informe o E-mail.");
+    if (!currentPassword || !newPassword || !confirmNewPassword) {
+      Alert.alert("Validacao", "Preencha todos os campos de senha.");
+      return;
+    }
+
+    if (newPassword !== confirmNewPassword) {
+      Alert.alert("Validacao", "Nova senha e confirmacao devem ser iguais.");
       return;
     }
 
     try {
       setSubmitting(true);
-      await forgotPassword(email.trim());
-      Alert.alert(
-        "Sucesso",
-        "Se o E-mail Existir, Enviaremos As Instruções De Redefinição.",
-      );
-      router.replace("/login");
+      await changePassword({
+        currentPassword,
+        newPassword,
+        confirmNewPassword,
+      });
+      Alert.alert("Sucesso", "Senha alterada com sucesso.");
+      router.back();
     } catch (error) {
-      // Erro já foi exibido pelo apiClient
+      // Erro ja foi exibido pelo apiClient
     } finally {
       setSubmitting(false);
     }
   };
 
+  if (authLoading || !isAuthenticated) {
+    return null;
+  }
+
   return (
     <ThemedScreen scroll={false}>
       <View style={styles.container}>
-        <Text style={styles.title}>Recuperar Senha</Text>
+        <Text style={styles.title}>Alterar Senha</Text>
         <Text style={styles.subtitle}>
-          Informe Seu E-mail Para Receber O Link De Recuperação.
+          Informe sua senha atual e defina a nova senha.
         </Text>
 
         <TextInput
           style={styles.input}
-          placeholder="E-mail"
-          keyboardType="email-address"
-          autoCapitalize="none"
-          value={email}
-          onChangeText={setEmail}
+          placeholder="Senha Atual"
+          secureTextEntry
+          value={currentPassword}
+          onChangeText={setCurrentPassword}
+        />
+
+        <TextInput
+          style={styles.input}
+          placeholder="Nova Senha"
+          secureTextEntry
+          value={newPassword}
+          onChangeText={setNewPassword}
+        />
+
+        <TextInput
+          style={styles.input}
+          placeholder="Confirmar Nova Senha"
+          secureTextEntry
+          value={confirmNewPassword}
+          onChangeText={setConfirmNewPassword}
         />
 
         <TouchableOpacity
@@ -61,12 +91,8 @@ export default function RecuperarSenhaScreen() {
           disabled={submitting}
         >
           <Text style={styles.primaryButtonText}>
-            {submitting ? "Enviando..." : "Enviar"}
+            {submitting ? "Salvando..." : "Salvar Nova Senha"}
           </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={() => router.replace("/login")}>
-          <Text style={styles.link}>Voltar Ao Login</Text>
         </TouchableOpacity>
       </View>
     </ThemedScreen>
@@ -108,10 +134,4 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   primaryButtonText: { color: COLORS.white, fontWeight: "700", fontSize: 15 },
-  link: {
-    textAlign: "center",
-    marginTop: 14,
-    color: COLORS.purple,
-    fontWeight: "700",
-  },
 });

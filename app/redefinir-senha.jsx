@@ -1,5 +1,12 @@
 import React, { useMemo, useState } from "react";
-import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import {
+  Alert,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { useAuth } from "../context/AuthContext";
 import ThemedScreen from "../components/ThemedScreen";
@@ -21,17 +28,17 @@ export default function RedefinirSenhaScreen() {
 
   const handleSubmit = async () => {
     if (!token || !newPassword) {
-      Alert.alert("Validação", "Informe token e nova senha.");
+      Alert.alert("Validação", "Informe O Token E A Nova Senha.");
       return;
     }
 
     try {
       setSubmitting(true);
       await resetPassword({ token, newPassword });
-      Alert.alert("Sucesso", "Senha redefinida com sucesso.");
+      Alert.alert("Sucesso", "Senha Redefinida Com Sucesso.");
       router.replace("/login");
     } catch (error) {
-      Alert.alert("Erro", error.message);
+      // Erro já foi exibido pelo apiClient
     } finally {
       setSubmitting(false);
     }
@@ -40,19 +47,30 @@ export default function RedefinirSenhaScreen() {
   return (
     <ThemedScreen scroll={false}>
       <View style={styles.container}>
-        <Text style={styles.title}>Redefinir senha</Text>
+        <Text style={styles.title}>Redefinir Senha</Text>
 
-        <TextInput style={styles.input} placeholder="Token" value={token} onChangeText={setToken} />
         <TextInput
           style={styles.input}
-          placeholder="Nova senha forte"
+          placeholder="Token"
+          value={token}
+          onChangeText={setToken}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Nova Senha Forte"
           secureTextEntry
           value={newPassword}
           onChangeText={setNewPassword}
         />
 
-        <TouchableOpacity style={styles.primaryButton} onPress={handleSubmit} disabled={submitting}>
-          <Text style={styles.primaryButtonText}>{submitting ? "Enviando..." : "Redefinir"}</Text>
+        <TouchableOpacity
+          style={styles.primaryButton}
+          onPress={handleSubmit}
+          disabled={submitting}
+        >
+          <Text style={styles.primaryButtonText}>
+            {submitting ? "Enviando..." : "Redefinir"}
+          </Text>
         </TouchableOpacity>
       </View>
     </ThemedScreen>
@@ -70,7 +88,12 @@ const styles = StyleSheet.create({
     borderColor: COLORS.purple,
     ...SHADOW,
   },
-  title: { fontSize: 28, fontWeight: "800", color: COLORS.navy, marginBottom: 20 },
+  title: {
+    fontSize: 28,
+    fontWeight: "800",
+    color: COLORS.navy,
+    marginBottom: 20,
+  },
   input: {
     backgroundColor: COLORS.white,
     borderWidth: 1,

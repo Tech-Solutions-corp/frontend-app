@@ -1,8 +1,21 @@
 // components/FiltroDeCategorias.jsx
-import React from 'react';
-import { ScrollView, TouchableOpacity, Text, StyleSheet } from 'react-native';
+import React from "react";
+import { ScrollView, TouchableOpacity, Text, StyleSheet } from "react-native";
 
-const FiltroDeCategorias = ({ categorias = [], categoriaSelecionada, aoSelecionar }) => {
+function toTitleCase(value = "") {
+  return String(value)
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
+const FiltroDeCategorias = ({
+  categorias = [],
+  categoriaSelecionada,
+  aoSelecionar,
+}) => {
   return (
     <ScrollView
       horizontal
@@ -18,8 +31,13 @@ const FiltroDeCategorias = ({ categorias = [], categoriaSelecionada, aoSeleciona
             onPress={() => aoSelecionar?.(cat)}
             activeOpacity={0.8}
           >
-            <Text style={[styles.chipTexto, estaSelecionada && styles.chipTextoSelecionado]}>
-              {cat}
+            <Text
+              style={[
+                styles.chipTexto,
+                estaSelecionada && styles.chipTextoSelecionado,
+              ]}
+            >
+              {toTitleCase(cat)}
             </Text>
           </TouchableOpacity>
         );
@@ -39,20 +57,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 20,
     borderWidth: 1.5,
-    borderColor: '#DDD5FF',
-    backgroundColor: 'transparent',
+    borderColor: "#DDD5FF",
+    backgroundColor: "transparent",
   },
   chipSelecionado: {
-    backgroundColor: '#6C47FF',
-    borderColor: '#6C47FF',
+    backgroundColor: "#6C47FF",
+    borderColor: "#6C47FF",
   },
   chipTexto: {
     fontSize: 14,
-    fontWeight: '500',
-    color: '#6C47FF',
+    fontWeight: "500",
+    color: "#6C47FF",
   },
   chipTextoSelecionado: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
   },
 });
 

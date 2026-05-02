@@ -3,6 +3,11 @@ import React from "react";
 import { ScrollView, TouchableOpacity, Text, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+function capitalizeFirst(value = "") {
+  const text = String(value);
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
 const CarrosselDeDatas = ({
   datas = [],
   indiceSelecionado = 0,
@@ -27,7 +32,7 @@ const CarrosselDeDatas = ({
             <Text
               style={[styles.mes, estaSelecionado && styles.textoSelecionado]}
             >
-              {item.mes}
+              {capitalizeFirst(item.mes)}
             </Text>
             <Text
               style={[styles.dia, estaSelecionado && styles.textoSelecionado]}
@@ -40,7 +45,7 @@ const CarrosselDeDatas = ({
                 estaSelecionado && styles.textoSelecionado,
               ]}
             >
-              {item.diaSemana}
+              {capitalizeFirst(item.diaSemana)}
             </Text>
           </TouchableOpacity>
         );

@@ -9,50 +9,75 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { useAuth } from "../context/AuthContext";
+import { useRequireAuth } from "../hooks/useRequireAuth";
 import ThemedScreen from "../components/ThemedScreen";
 import { COLORS, SHADOW } from "../constants/theme";
 
-export default function RecuperarSenhaScreen() {
-  const { forgotPassword } = useAuth();
-  const [email, setEmail] = useState("");
+export default function AlterarEmailScreen() {
+  const { loading: authLoading, isAuthenticated, userEmail } = useRequireAuth();
+  const { changeEmail, logout } = useAuth();
+
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newEmail, setNewEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async () => {
-    if (!email) {
-      Alert.alert("Validação", "Informe o E-mail.");
+    if (!currentPassword || !newEmail) {
+      Alert.alert("Validacao", "Preencha todos os campos.");
+      return;
+    }
+
+    if (newEmail === userEmail) {
+      Alert.alert("Validacao", "Novo email deve ser diferente do email atual.");
       return;
     }
 
     try {
       setSubmitting(true);
-      await forgotPassword(email.trim());
+      await changeEmail({ currentPassword, newEmail });
       Alert.alert(
         "Sucesso",
-        "Se o E-mail Existir, Enviaremos As Instruções De Redefinição.",
+        "Email alterado com sucesso. Você será redirecionado para fazer login novamente.",
       );
+      await logout();
       router.replace("/login");
     } catch (error) {
-      // Erro já foi exibido pelo apiClient
+      // Erro ja foi exibido pelo apiClient
     } finally {
       setSubmitting(false);
     }
   };
 
+  if (authLoading || !isAuthenticated) {
+    return null;
+  }
+
   return (
     <ThemedScreen scroll={false}>
       <View style={styles.container}>
-        <Text style={styles.title}>Recuperar Senha</Text>
+        <Text style={styles.title}>Alterar Email</Text>
         <Text style={styles.subtitle}>
-          Informe Seu E-mail Para Receber O Link De Recuperação.
+          Informe sua senha e defina o novo email.
         </Text>
+
+        <Text style={styles.label}>Email Atual</Text>
+        <Text style={styles.email}>{userEmail}</Text>
 
         <TextInput
           style={styles.input}
-          placeholder="E-mail"
+          placeholder="Senha Atual"
+          secureTextEntry
+          value={currentPassword}
+          onChangeText={setCurrentPassword}
+        />
+
+        <TextInput
+          style={styles.input}
+          placeholder="Novo Email"
           keyboardType="email-address"
           autoCapitalize="none"
-          value={email}
-          onChangeText={setEmail}
+          value={newEmail}
+          onChangeText={setNewEmail}
         />
 
         <TouchableOpacity
@@ -61,12 +86,8 @@ export default function RecuperarSenhaScreen() {
           disabled={submitting}
         >
           <Text style={styles.primaryButtonText}>
-            {submitting ? "Enviando..." : "Enviar"}
+            {submitting ? "Salvando..." : "Salvar Novo Email"}
           </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={() => router.replace("/login")}>
-          <Text style={styles.link}>Voltar Ao Login</Text>
         </TouchableOpacity>
       </View>
     </ThemedScreen>
@@ -91,6 +112,18 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   subtitle: { color: COLORS.indigo, marginBottom: 20 },
+  label: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: COLORS.indigo,
+    marginBottom: 4,
+  },
+  email: {
+    fontSize: 14,
+    color: COLORS.navy,
+    marginBottom: 16,
+    fontWeight: "600",
+  },
   input: {
     backgroundColor: COLORS.white,
     borderWidth: 1,
@@ -108,10 +141,4 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   primaryButtonText: { color: COLORS.white, fontWeight: "700", fontSize: 15 },
-  link: {
-    textAlign: "center",
-    marginTop: 14,
-    color: COLORS.purple,
-    fontWeight: "700",
-  },
 });

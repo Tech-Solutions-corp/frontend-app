@@ -1,5 +1,13 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { setUnauthorizedCallback } from "../services/apiClient";
 import { financeApi } from "../services/financeApi";
 
 const TOKEN_KEY = "auth_token";
@@ -19,12 +27,13 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const bootstrap = async () => {
       try {
-        const [savedToken, savedUserId, savedEmail, savedName] = await Promise.all([
-          AsyncStorage.getItem(TOKEN_KEY),
-          AsyncStorage.getItem(USER_ID_KEY),
-          AsyncStorage.getItem(USER_EMAIL_KEY),
-          AsyncStorage.getItem(USER_NAME_KEY),
-        ]);
+        const [savedToken, savedUserId, savedEmail, savedName] =
+          await Promise.all([
+            AsyncStorage.getItem(TOKEN_KEY),
+            AsyncStorage.getItem(USER_ID_KEY),
+            AsyncStorage.getItem(USER_EMAIL_KEY),
+            AsyncStorage.getItem(USER_NAME_KEY),
+          ]);
 
         setToken(savedToken);
         setUserId(savedUserId);
@@ -40,14 +49,25 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     const auth = await financeApi.login(email, password);
+    setToken(auth.token);
+    setUserId(String(auth.id));
+    setUserEmail(email);
+
     await Promise.all([
       AsyncStorage.setItem(TOKEN_KEY, auth.token),
       AsyncStorage.setItem(USER_ID_KEY, String(auth.id)),
       AsyncStorage.setItem(USER_EMAIL_KEY, email),
     ]);
-    setToken(auth.token);
-    setUserId(String(auth.id));
-    setUserEmail(email);
+
+    try {
+      const userData = await financeApi.getCurrentUser(auth.token);
+      const userName = userData?.name || email;
+      setUserName(userName);
+      await AsyncStorage.setItem(USER_NAME_KEY, userName);
+    } catch (err) {
+      setUserName(email);
+      await AsyncStorage.setItem(USER_NAME_KEY, email);
+    }
   };
 
   const register = async ({ name, email, password }) => {
@@ -70,6 +90,13 @@ export function AuthProvider({ children }) {
     setUserName(null);
   };
 
+  useEffect(() => {
+    setUnauthorizedCallback(async () => {
+      await logout();
+      router.replace("/login");
+    });
+  }, []);
+
   const value = useMemo(
     () => ({
       token,
@@ -83,8 +110,10 @@ export function AuthProvider({ children }) {
       logout,
       forgotPassword: financeApi.forgotPassword,
       resetPassword: financeApi.resetPassword,
+      changePassword: (payload) => financeApi.changePassword(token, payload),
+      changeEmail: (payload) => financeApi.changeEmail(token, payload),
     }),
-    [token, userId, userEmail, userName, loading]
+    [token, userId, userEmail, userName, loading],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

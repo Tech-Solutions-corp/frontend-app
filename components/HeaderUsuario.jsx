@@ -1,6 +1,6 @@
-import React from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
-import SinoIcon from "../assets/sino-icon.png";
+import React from "react";
+import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
+import NotificationBell from "./NotificationBell";
 
 const HeaderUsuario = ({ nome, avatar }) => {
   const initials = (nome || "U")
@@ -25,25 +25,23 @@ const HeaderUsuario = ({ nome, avatar }) => {
           <Text style={styles.nome}>{nome}</Text>
         </View>
       </View>
-      <TouchableOpacity style={styles.headerBtn}>
-        <Image style={styles.btn} source={SinoIcon}/>
-      </TouchableOpacity>
+      <NotificationBell />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 16,
   },
   esquerda: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 12,
   },
   avatar: {
@@ -65,23 +63,23 @@ const styles = StyleSheet.create({
   },
   ola: {
     fontSize: 13,
-    color: '#888',
+    color: "#888",
   },
   nome: {
     fontSize: 18,
-    fontWeight: '700',
-    color: '#1A1A2E',
+    fontWeight: "700",
+    color: "#1A1A2E",
   },
   headerBtn: {
     width: 40,
     height: 40,
     borderRadius: 12,
     alignItems: "center",
-    justifyContent: "center"
+    justifyContent: "center",
   },
   btn: {
     width: 23,
-    height: 23
+    height: 23,
   },
 });
 

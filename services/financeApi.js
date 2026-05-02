@@ -7,6 +7,8 @@ export const financeApi = {
       body: { email, password },
     }),
 
+  getCurrentUser: (token) => apiRequest("/api/v1/users/me", { token }),
+
   register: ({ name, email, password }) =>
     apiRequest("/api/v1/users/register", {
       method: "POST",
@@ -25,6 +27,23 @@ export const financeApi = {
       body: { token, newPassword },
     }),
 
+  changePassword: (
+    token,
+    { currentPassword, newPassword, confirmNewPassword },
+  ) =>
+    apiRequest("/api/v1/users/password/change", {
+      method: "POST",
+      token,
+      body: { currentPassword, newPassword, confirmNewPassword },
+    }),
+
+  changeEmail: (token, { currentPassword, newEmail }) =>
+    apiRequest("/api/v1/users/email/change", {
+      method: "POST",
+      token,
+      body: { currentPassword, newEmail },
+    }),
+
   listAccountsByUser: (token, userId) =>
     apiRequest(`/api/v1/accounts/user/${userId}`, { token }),
 
@@ -33,6 +52,12 @@ export const financeApi = {
       method: "POST",
       token,
       body: payload,
+    }),
+
+  deleteAccount: (token, accountId) =>
+    apiRequest(`/api/v1/accounts/${accountId}`, {
+      method: "DELETE",
+      token,
     }),
 
   listCategoriesByUser: (token, userId) =>
@@ -44,12 +69,28 @@ export const financeApi = {
       token,
       body: payload,
     }),
+  deleteCategory: (token, categoryId, reassignTo) =>
+    apiRequest(
+      `/api/v1/categories/${categoryId}` +
+        (reassignTo ? `?reassignTo=${reassignTo}` : ""),
+      { method: "DELETE", token },
+    ),
 
   listTransactionsByUser: (token, userId) =>
     apiRequest(`/api/v1/transactions/user/${userId}`, { token }),
 
   createTransaction: (token, payload) =>
     apiRequest("/api/v1/transactions", {
+      method: "POST",
+      token,
+      body: payload,
+    }),
+
+  listMonthlyLimitsByUser: (token, userId) =>
+    apiRequest(`/api/v1/monthly-limits/user/${userId}`, { token }),
+
+  createMonthlyLimit: (token, payload) =>
+    apiRequest("/api/v1/monthly-limits", {
       method: "POST",
       token,
       body: payload,

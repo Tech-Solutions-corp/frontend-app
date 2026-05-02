@@ -1,5 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import {
+  Alert,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { router } from "expo-router";
 import { useAuth } from "../context/AuthContext";
 import ThemedScreen from "../components/ThemedScreen";
@@ -19,7 +26,7 @@ export default function LoginScreen() {
 
   const handleSubmit = async () => {
     if (!email || !password) {
-      Alert.alert("Validação", "Informe email e senha.");
+      Alert.alert("Validação", "Informe E-mail E Senha.");
       return;
     }
 
@@ -28,7 +35,7 @@ export default function LoginScreen() {
       await login(email.trim(), password);
       router.replace("/");
     } catch (error) {
-      Alert.alert("Falha no login", error.message);
+      // Erro já foi exibido pelo apiClient
     } finally {
       setSubmitting(false);
     }
@@ -38,11 +45,13 @@ export default function LoginScreen() {
     <ThemedScreen scroll={false}>
       <View style={styles.container}>
         <Text style={styles.title}>Entrar</Text>
-        <Text style={styles.subtitle}>Acesso seguro da sua vida financeira</Text>
+        <Text style={styles.subtitle}>
+          Acesso Seguro Da Sua Vida Financeira
+        </Text>
 
         <TextInput
           style={styles.input}
-          placeholder="Email"
+          placeholder="E-mail"
           keyboardType="email-address"
           autoCapitalize="none"
           value={email}
@@ -56,16 +65,22 @@ export default function LoginScreen() {
           onChangeText={setPassword}
         />
 
-        <TouchableOpacity style={styles.primaryButton} onPress={handleSubmit} disabled={submitting}>
-          <Text style={styles.primaryButtonText}>{submitting ? "Entrando..." : "Entrar"}</Text>
+        <TouchableOpacity
+          style={styles.primaryButton}
+          onPress={handleSubmit}
+          disabled={submitting}
+        >
+          <Text style={styles.primaryButtonText}>
+            {submitting ? "Entrando..." : "Entrar"}
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => router.push("/recuperar-senha")}>
-          <Text style={styles.link}>Esqueci minha senha</Text>
+          <Text style={styles.link}>Esqueci Minha Senha</Text>
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => router.push("/register")}>
-          <Text style={styles.link}>Criar nova conta</Text>
+          <Text style={styles.link}>Criar Nova Conta</Text>
         </TouchableOpacity>
       </View>
     </ThemedScreen>
@@ -84,7 +99,12 @@ const styles = StyleSheet.create({
     ...SHADOW,
   },
   title: { fontSize: 30, fontWeight: "800", color: COLORS.navy },
-  subtitle: { fontSize: 15, color: COLORS.indigo, marginBottom: 24, marginTop: 6 },
+  subtitle: {
+    fontSize: 15,
+    color: COLORS.indigo,
+    marginBottom: 24,
+    marginTop: 6,
+  },
   input: {
     backgroundColor: COLORS.white,
     borderWidth: 1,
@@ -102,5 +122,10 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   primaryButtonText: { color: COLORS.white, fontWeight: "700", fontSize: 15 },
-  link: { textAlign: "center", marginTop: 14, color: COLORS.purple, fontWeight: "700" },
+  link: {
+    textAlign: "center",
+    marginTop: 14,
+    color: COLORS.purple,
+    fontWeight: "700",
+  },
 });

@@ -1,11 +1,27 @@
 import React, { useEffect, useState } from "react";
-import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
-import BarraDeNavegacao from "../components/BarraDeNavegacao";
+import {
+  Alert,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { useRequireAuth } from "../hooks/useRequireAuth";
 import { useAuth } from "../context/AuthContext";
 import { financeApi } from "../services/financeApi";
 import ThemedScreen from "../components/ThemedScreen";
 import { COLORS, SHADOW } from "../constants/theme";
+import { formatDateTime } from "../utils/dateFormatter";
+
+function formatLabel(value = "") {
+  return String(value)
+    .toLowerCase()
+    .split(/[_\s]+/)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
 
 export default function ImportacoesScreen() {
   const { loading: authLoading, isAuthenticated } = useRequireAuth();
@@ -20,7 +36,7 @@ export default function ImportacoesScreen() {
       const data = await financeApi.listImportsByUser(token, userId);
       setImports(data || []);
     } catch (error) {
-      Alert.alert("Erro", error.message);
+      // Erro já foi exibido pelo apiClient
     }
   };
 
@@ -32,7 +48,7 @@ export default function ImportacoesScreen() {
 
   const createImport = async () => {
     if (!fileName) {
-      Alert.alert("Validação", "Informe o nome do arquivo.");
+      Alert.alert("Validação", "Informe O Nome Do Arquivo.");
       return;
     }
 
@@ -45,7 +61,7 @@ export default function ImportacoesScreen() {
       setFileName("");
       await loadImports();
     } catch (error) {
-      Alert.alert("Erro", error.message);
+      // Erro já foi exibido pelo apiClient
     } finally {
       setSubmitting(false);
     }
@@ -57,39 +73,51 @@ export default function ImportacoesScreen() {
 
   return (
     <ThemedScreen contentContainerStyle={styles.container}>
-        <Text style={styles.title}>Importacoes</Text>
+      <Text style={styles.title}>Importações</Text>
 
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Registrar importacao</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Nome do arquivo (csv)"
-            value={fileName}
-            onChangeText={setFileName}
-          />
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Registrar Importação</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Nome Do Arquivo (CSV)"
+          value={fileName}
+          onChangeText={setFileName}
+        />
 
-          <TouchableOpacity style={styles.primaryButton} onPress={createImport} disabled={submitting}>
-            <Text style={styles.primaryButtonText}>{submitting ? "Salvando..." : "Salvar"}</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          style={styles.primaryButton}
+          onPress={createImport}
+          disabled={submitting}
+        >
+          <Text style={styles.primaryButtonText}>
+            {submitting ? "Salvando..." : "Salvar"}
+          </Text>
+        </TouchableOpacity>
+      </View>
 
-        {imports.map((item) => (
-          <View key={String(item.id)} style={styles.item}>
-            <View>
-              <Text style={styles.itemTitle}>{item.fileName}</Text>
-              <Text style={styles.itemMeta}>{item.importedAt}</Text>
-            </View>
-            <Text style={styles.itemStatus}>{item.status}</Text>
+      {imports.map((item) => (
+        <View key={String(item.id)} style={styles.item}>
+          <View>
+            <Text style={styles.itemTitle}>{item.fileName}</Text>
+            <Text style={styles.itemMeta}>
+              {formatDateTime(item.importedAt)}
+            </Text>
           </View>
-        ))}
-      <BarraDeNavegacao abaAtiva="home" />
+          <Text style={styles.itemStatus}>{formatLabel(item.status)}</Text>
+        </View>
+      ))}
     </ThemedScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { paddingBottom: 110 },
-  title: { fontSize: 27, fontWeight: "800", color: COLORS.navy, marginBottom: 10 },
+  container: {},
+  title: {
+    fontSize: 27,
+    fontWeight: "800",
+    color: COLORS.navy,
+    marginBottom: 10,
+  },
   card: {
     backgroundColor: COLORS.white,
     borderRadius: 16,
@@ -99,7 +127,12 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     ...SHADOW,
   },
-  cardTitle: { fontSize: 16, fontWeight: "700", marginBottom: 8, color: COLORS.navy },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    marginBottom: 8,
+    color: COLORS.navy,
+  },
   input: {
     borderWidth: 1,
     borderColor: COLORS.purple,
@@ -110,7 +143,12 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
   },
   row: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 8 },
-  tag: { backgroundColor: "#F3E8FF", borderRadius: 999, paddingHorizontal: 10, paddingVertical: 8 },
+  tag: {
+    backgroundColor: "#F3E8FF",
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
   tagActive: { backgroundColor: COLORS.purple },
   tagText: { color: COLORS.navy, fontWeight: "600", fontSize: 12 },
   primaryButton: {

@@ -1,4 +1,13 @@
+import { Alert } from "react-native";
+import { showAlert } from "./alertService";
+
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:8080";
+
+let onUnauthorized = null;
+
+export function setUnauthorizedCallback(callback) {
+  onUnauthorized = callback;
+}
 
 function buildHeaders(token, hasBody = false) {
   const headers = {
@@ -17,23 +26,48 @@ function buildHeaders(token, hasBody = false) {
 }
 
 export async function apiRequest(path, { method = "GET", token, body } = {}) {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    method,
-    headers: buildHeaders(token, body !== undefined),
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  });
+  let response;
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, {
+      method,
+      headers: buildHeaders(token, body !== undefined),
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+  } catch (networkErr) {
+    const message = "Falha de rede: " + (networkErr.message || "Sem detalhes");
+    showAlert("Erro de Rede", message);
+    const error = new Error(message);
+    error.status = null;
+    error.body = null;
+    throw error;
+  }
 
   if (response.status === 204) {
     return null;
   }
 
   const text = await response.text();
-  const parsed = text ? JSON.parse(text) : null;
-
+  let parsed = null;
+  try {
+    parsed = text ? JSON.parse(text) : null;
+  } catch (e) {
+    parsed = null;
+  }
   if (!response.ok) {
-    const message = parsed?.message || "Erro ao processar requisicao";
+    if (response.status === 401 && onUnauthorized) {
+      onUnauthorized();
+      return;
+    }
+    const message =
+      parsed?.message ??
+      parsed?.msg ??
+      parsed?.error ??
+      response.statusText ??
+      "Erro ao processar requisição";
+    showAlert("Erro na Requisição", message);
     const error = new Error(message);
     error.status = response.status;
+    error.body = parsed;
     throw error;
   }
 

@@ -62,6 +62,7 @@ const BarraDeNavegacao = ({ abaAtiva = "home" }) => {
         <TouchableOpacity
           style={[styles.fab, { left: larguraContainer / 2 - FAB_SIZE / 2 }]}
           activeOpacity={0.85}
+          onPress={() => handlePress("gastos")}
         >
           <Text style={styles.fabIcone}>＋</Text>
         </TouchableOpacity>
@@ -89,6 +90,10 @@ const BarraDeNavegacao = ({ abaAtiva = "home" }) => {
 
 const styles = StyleSheet.create({
   container: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
     flexDirection: "row",
     backgroundColor: "#FFFFFF",
     paddingVertical: 12,
@@ -101,6 +106,7 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 10,
     overflow: "visible",
+    zIndex: 50,
   },
   aba: {
     flex: 1,
