@@ -66,6 +66,7 @@ export default function AlterarEmailScreen() {
         <TextInput
           style={styles.input}
           placeholder="Senha Atual"
+          placeholderTextColor="rgba(26, 26, 46, 0.55)"
           secureTextEntry
           value={currentPassword}
           onChangeText={setCurrentPassword}
@@ -74,6 +75,7 @@ export default function AlterarEmailScreen() {
         <TextInput
           style={styles.input}
           placeholder="Novo Email"
+          placeholderTextColor="rgba(26, 26, 46, 0.55)"
           keyboardType="email-address"
           autoCapitalize="none"
           value={newEmail}

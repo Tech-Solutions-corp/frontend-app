@@ -52,12 +52,14 @@ export default function RedefinirSenhaScreen() {
         <TextInput
           style={styles.input}
           placeholder="Token"
+          placeholderTextColor="rgba(26, 26, 46, 0.55)"
           value={token}
           onChangeText={setToken}
         />
         <TextInput
           style={styles.input}
           placeholder="Nova Senha Forte"
+          placeholderTextColor="rgba(26, 26, 46, 0.55)"
           secureTextEntry
           value={newPassword}
           onChangeText={setNewPassword}

@@ -133,12 +133,14 @@ export default function GastosScreen() {
         <TextInput
           style={styles.input}
           placeholder="Descrição"
+          placeholderTextColor="rgba(26, 26, 46, 0.55)"
           value={description}
           onChangeText={setDescription}
         />
         <TextInput
           style={styles.input}
           placeholder="Valor"
+          placeholderTextColor="rgba(26, 26, 46, 0.55)"
           keyboardType="decimal-pad"
           value={amount}
           onChangeText={setAmount}

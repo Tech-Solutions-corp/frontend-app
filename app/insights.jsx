@@ -13,6 +13,8 @@ import { financeApi } from "../services/financeApi";
 import ThemedScreen from "../components/ThemedScreen";
 import { COLORS, SHADOW } from "../constants/theme";
 import { formatDateTime } from "../utils/dateFormatter";
+import { router } from "expo-router";
+
 
 const INSIGHT_TYPES = ["SPENDING_PATTERN", "SAVING_TIP", "ANOMALY_DETECTION"];
 
@@ -27,14 +29,17 @@ export default function InsightsScreen() {
   const { token, userId } = useAuth();
 
   const [insights, setInsights] = useState([]);
-  const [content, setContent] = useState("");
+  const [specification, setSpecification] = useState("");
   const [insightType, setInsightType] = useState("SAVING_TIP");
   const [submitting, setSubmitting] = useState(false);
 
   const loadInsights = async () => {
     try {
       const data = await financeApi.listInsightsByUser(token, userId);
-      setInsights(data || []);
+      const sorted = (data || []).slice().sort((a, b) =>
+        new Date(b.generatedAt) - new Date(a.generatedAt),
+      );
+      setInsights(sorted);
     } catch (error) {
       // Erro já foi exibido pelo apiClient
     }
@@ -46,20 +51,19 @@ export default function InsightsScreen() {
     }
   }, [isAuthenticated, token, userId]);
 
-  const createInsight = async () => {
-    if (!content) {
-      Alert.alert("Validação", "Escreva O Insight.");
+  const generateInsight = async () => {
+    if (!specification) {
+      Alert.alert("Validação", "Digite a especificação da necessidade.");
       return;
     }
 
     try {
       setSubmitting(true);
-      await financeApi.createInsight(token, {
-        userId: Number(userId),
+      await financeApi.generateInsight(token, {
         insightType,
-        content,
+        specification,
       });
-      setContent("");
+      setSpecification("");
       await loadInsights();
     } catch (error) {
       // Erro já foi exibido pelo apiClient
@@ -77,13 +81,14 @@ export default function InsightsScreen() {
       <Text style={styles.title}>Insights De IA</Text>
 
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Registrar Insight</Text>
+        <Text style={styles.cardTitle}>Pedir Insight de IA</Text>
         <TextInput
           style={[styles.input, styles.textArea]}
           multiline
-          placeholder="Conteúdo Do Insight"
-          value={content}
-          onChangeText={setContent}
+          placeholder="Especifique sua necessidade (ex: Como posso economizar mais no transporte?)"
+          placeholderTextColor="rgba(26, 26, 46, 0.55)"
+          value={specification}
+          onChangeText={setSpecification}
         />
 
         <View style={styles.typeRow}>
@@ -100,25 +105,28 @@ export default function InsightsScreen() {
 
         <TouchableOpacity
           style={styles.primaryButton}
-          onPress={createInsight}
+          onPress={generateInsight}
           disabled={submitting}
         >
           <Text style={styles.primaryButtonText}>
-            {submitting ? "Salvando..." : "Salvar Insight"}
+            {submitting ? "Gerando..." : "Gerar Insight"}
           </Text>
         </TouchableOpacity>
       </View>
 
       {insights.map((insight) => (
-        <View key={String(insight.id)} style={styles.insightCard}>
-          <Text style={styles.insightType}>
+        <TouchableOpacity
+          key={String(insight.id)}
+          style={styles.notificationCard}
+          onPress={() => router.push(`/insights/${insight.id}`)}
+        >
+          <Text style={styles.notificationTitle}>
             {formatType(insight.insightType)}
           </Text>
-          <Text style={styles.insightText}>{insight.content}</Text>
-          <Text style={styles.insightDate}>
+          <Text style={styles.notificationDate}>
             {formatDateTime(insight.generatedAt)}
           </Text>
-        </View>
+        </TouchableOpacity>
       ))}
     </ThemedScreen>
   );
@@ -174,14 +182,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   primaryButtonText: { color: COLORS.white, fontWeight: "700" },
-  insightCard: {
-    backgroundColor: COLORS.white,
-    borderRadius: 12,
+  notificationCard: {
+    backgroundColor: "#F8F7FF",
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: COLORS.purple,
-    padding: 12,
-    marginBottom: 8,
+    borderColor: "#E6E0F8",
+    marginBottom: 12,
+    padding: 14,
   },
+  notificationTitle: { color: COLORS.purple, fontWeight: "700", marginBottom: 6 },
+  notificationDate: { color: COLORS.indigo, fontSize: 12 },
   insightType: { color: COLORS.purple, fontWeight: "700", marginBottom: 4 },
   insightText: { color: COLORS.navy, lineHeight: 20 },
   insightDate: { marginTop: 5, fontSize: 12, color: COLORS.indigo },

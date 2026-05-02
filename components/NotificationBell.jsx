@@ -9,6 +9,7 @@ import {
   StyleSheet,
   TouchableWithoutFeedback,
 } from "react-native";
+import { useRouter } from "expo-router";
 import { useAuth } from "../context/AuthContext";
 import { financeApi } from "../services/financeApi";
 import SinoIcon from "../assets/sino-icon.png";
@@ -28,6 +29,7 @@ function formatInsightType(type = "") {
 }
 
 const NotificationBell = () => {
+  const router = useRouter();
   const { token, userId } = useAuth();
   const [insights, setInsights] = useState([]);
   const [visible, setVisible] = useState(false);
@@ -35,7 +37,10 @@ const NotificationBell = () => {
   const loadInsights = async () => {
     try {
       const data = await financeApi.listInsightsByUser(token, userId);
-      setInsights(data || []);
+      const sorted = (data || []).slice().sort((a, b) =>
+        new Date(b.generatedAt) - new Date(a.generatedAt),
+      );
+      setInsights(sorted);
     } catch (e) {
       setInsights([]);
     }
@@ -80,15 +85,20 @@ const NotificationBell = () => {
                     style={{ flexShrink: 1 }}
                     contentContainerStyle={{ paddingBottom: 4 }}
                     renderItem={({ item }) => (
-                      <View style={styles.item}>
+                      <TouchableOpacity
+                        style={styles.item}
+                        onPress={() => {
+                          close();
+                          router.push(`/insights/${item.id}`);
+                        }}
+                      >
                         <Text style={styles.itemTitle}>
                           {formatInsightType(item.insightType)}
                         </Text>
-                        <Text style={styles.itemText}>{item.content}</Text>
                         <Text style={styles.itemDate}>
                           {formatDateTime(item.generatedAt)}
                         </Text>
-                      </View>
+                      </TouchableOpacity>
                     )}
                   />
                 )}
