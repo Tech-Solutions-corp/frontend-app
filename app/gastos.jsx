@@ -185,7 +185,9 @@ export default function GastosScreen() {
               style={styles.accountRequiredButton}
               onPress={() => router.push("/contas")}
             >
-              <Text style={styles.accountRequiredButtonText}>Ir Para Contas</Text>
+              <Text style={styles.accountRequiredButtonText}>
+                Ir Para Contas
+              </Text>
             </TouchableOpacity>
           </View>
         )}
