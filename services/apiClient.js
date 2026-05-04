@@ -1,6 +1,3 @@
-import { Alert } from "react-native";
-import { showAlert } from "./alertService";
-
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:8080";
 
 let onUnauthorized = null;
@@ -35,7 +32,6 @@ export async function apiRequest(path, { method = "GET", token, body } = {}) {
     });
   } catch (networkErr) {
     const message = "Falha de rede: " + (networkErr.message || "Sem detalhes");
-    showAlert("Erro de Rede", message);
     const error = new Error(message);
     error.status = null;
     error.body = null;
@@ -54,7 +50,7 @@ export async function apiRequest(path, { method = "GET", token, body } = {}) {
     parsed = null;
   }
   if (!response.ok) {
-    if (response.status === 401 && onUnauthorized) {
+    if (response.status === 401 && token && onUnauthorized) {
       onUnauthorized();
       return;
     }
@@ -64,7 +60,6 @@ export async function apiRequest(path, { method = "GET", token, body } = {}) {
       parsed?.error ??
       response.statusText ??
       "Erro ao processar requisição";
-    showAlert("Erro na Requisição", message);
     const error = new Error(message);
     error.status = response.status;
     error.body = parsed;

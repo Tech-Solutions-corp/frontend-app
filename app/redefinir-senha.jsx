@@ -38,7 +38,7 @@ export default function RedefinirSenhaScreen() {
       Alert.alert("Sucesso", "Senha Redefinida Com Sucesso.");
       router.replace("/login");
     } catch (error) {
-      // Erro já foi exibido pelo apiClient
+      Alert.alert("Erro", error.message || "Erro ao redefinir a senha.");
     } finally {
       setSubmitting(false);
     }

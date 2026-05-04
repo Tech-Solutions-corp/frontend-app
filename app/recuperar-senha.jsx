@@ -32,7 +32,7 @@ export default function RecuperarSenhaScreen() {
       );
       router.replace("/login");
     } catch (error) {
-      // Erro já foi exibido pelo apiClient
+      Alert.alert("Erro", error.message || "Erro ao enviar o e-mail de recuperação.");
     } finally {
       setSubmitting(false);
     }

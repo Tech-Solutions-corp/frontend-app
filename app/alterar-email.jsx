@@ -42,7 +42,7 @@ export default function AlterarEmailScreen() {
       await logout();
       router.replace("/login");
     } catch (error) {
-      // Erro ja foi exibido pelo apiClient
+      Alert.alert("Erro", error.message || "Erro ao alterar o email.");
     } finally {
       setSubmitting(false);
     }

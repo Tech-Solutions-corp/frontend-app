@@ -72,7 +72,7 @@ export default function AgendaScreen() {
         setTransactions(transactionData || []);
         setCategories(categoryData || []);
       } catch (error) {
-        // Erro já foi exibido pelo apiClient
+        Alert.alert("Erro", error.message || "Erro ao carregar agenda.");
       }
     };
 

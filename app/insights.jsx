@@ -41,7 +41,7 @@ export default function InsightsScreen() {
       );
       setInsights(sorted);
     } catch (error) {
-      // Erro já foi exibido pelo apiClient
+      Alert.alert("Erro", error.message || "Erro ao carregar insights.");
     }
   };
 
@@ -66,7 +66,7 @@ export default function InsightsScreen() {
       setSpecification("");
       await loadInsights();
     } catch (error) {
-      // Erro já foi exibido pelo apiClient
+      Alert.alert("Erro", error.message || "Erro ao gerar insight.");
     } finally {
       setSubmitting(false);
     }

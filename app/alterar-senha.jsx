@@ -43,7 +43,7 @@ export default function AlterarSenhaScreen() {
       Alert.alert("Sucesso", "Senha alterada com sucesso.");
       router.back();
     } catch (error) {
-      // Erro ja foi exibido pelo apiClient
+      Alert.alert("Erro", error.message || "Erro ao alterar a senha.");
     } finally {
       setSubmitting(false);
     }
