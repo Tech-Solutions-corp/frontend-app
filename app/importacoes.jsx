@@ -36,7 +36,7 @@ export default function ImportacoesScreen() {
       const data = await financeApi.listImportsByUser(token, userId);
       setImports(data || []);
     } catch (error) {
-      // Erro já foi exibido pelo apiClient
+      Alert.alert("Erro", error.message || "Erro ao carregar importações.");
     }
   };
 
@@ -61,7 +61,7 @@ export default function ImportacoesScreen() {
       setFileName("");
       await loadImports();
     } catch (error) {
-      // Erro já foi exibido pelo apiClient
+      Alert.alert("Erro", error.message || "Erro ao registrar importação.");
     } finally {
       setSubmitting(false);
     }

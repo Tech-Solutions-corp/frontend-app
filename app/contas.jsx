@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
+  Alert,
   Modal,
   StyleSheet,
   Text,
@@ -67,7 +68,7 @@ export default function ContasScreen() {
       const data = await financeApi.listAccountsByUser(token, userId);
       setAccounts(data || []);
     } catch (error) {
-      // Erro já foi exibido pelo apiClient
+      Alert.alert("Erro", error.message || "Erro ao carregar contas.");
     }
   };
 
@@ -100,7 +101,7 @@ export default function ContasScreen() {
       setBalance("");
       await loadAccounts();
     } catch (error) {
-      // Erro já foi exibido pelo apiClient
+      Alert.alert("Erro", error.message || "Erro ao criar conta.");
     } finally {
       setSubmitting(false);
     }
@@ -114,7 +115,7 @@ export default function ContasScreen() {
       await financeApi.deleteAccount(token, deleteModal.item.id);
       await loadAccounts();
     } catch (error) {
-      // Erro já foi exibido pelo apiClient
+      Alert.alert("Erro", error.message || "Erro ao excluir conta.");
     } finally {
       closeModal();
     }

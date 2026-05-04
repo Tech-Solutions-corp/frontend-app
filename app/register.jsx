@@ -56,7 +56,7 @@ export default function RegisterScreen() {
       await register({ name: name.trim(), email: email.trim(), password });
       router.replace("/");
     } catch (error) {
-      // Erro já foi exibido pelo apiClient
+      Alert.alert("Erro", error.message || "Erro ao criar conta.");
     } finally {
       setSubmitting(false);
     }

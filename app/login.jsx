@@ -35,7 +35,7 @@ export default function LoginScreen() {
       await login(email.trim(), password);
       router.replace("/");
     } catch (error) {
-      // Erro já foi exibido pelo apiClient
+      Alert.alert("Erro", error.message || "Erro ao fazer login.");
     } finally {
       setSubmitting(false);
     }

@@ -54,7 +54,7 @@ export default function GastosScreen() {
         setSelectedAccountId(String(accountData[0].id));
       }
     } catch (error) {
-      // Erro já foi exibido pelo apiClient
+      Alert.alert("Erro", error.message || "Erro ao carregar gastos.");
     }
   };
 
@@ -114,7 +114,7 @@ export default function GastosScreen() {
       setAmount("");
       await loadData();
     } catch (error) {
-      // Erro já foi exibido pelo apiClient
+      Alert.alert("Erro", error.message || "Erro ao criar transação.");
     } finally {
       setRefreshing(false);
     }
