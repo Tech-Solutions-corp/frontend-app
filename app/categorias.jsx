@@ -96,6 +96,7 @@ export default function CategoriasScreen() {
         <TextInput
           style={styles.input}
           placeholder="Nome"
+          placeholderTextColor="rgba(26, 26, 46, 0.55)"
           value={name}
           onChangeText={setName}
         />

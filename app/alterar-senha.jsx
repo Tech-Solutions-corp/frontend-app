@@ -64,6 +64,7 @@ export default function AlterarSenhaScreen() {
         <TextInput
           style={styles.input}
           placeholder="Senha Atual"
+          placeholderTextColor="rgba(26, 26, 46, 0.55)"
           secureTextEntry
           value={currentPassword}
           onChangeText={setCurrentPassword}
@@ -72,6 +73,7 @@ export default function AlterarSenhaScreen() {
         <TextInput
           style={styles.input}
           placeholder="Nova Senha"
+          placeholderTextColor="rgba(26, 26, 46, 0.55)"
           secureTextEntry
           value={newPassword}
           onChangeText={setNewPassword}
@@ -80,6 +82,7 @@ export default function AlterarSenhaScreen() {
         <TextInput
           style={styles.input}
           placeholder="Confirmar Nova Senha"
+          placeholderTextColor="rgba(26, 26, 46, 0.55)"
           secureTextEntry
           value={confirmNewPassword}
           onChangeText={setConfirmNewPassword}

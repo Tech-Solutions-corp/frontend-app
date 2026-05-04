@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { View, TouchableOpacity, Text, StyleSheet, Image } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import ImgCalendario from "../assets/calendario-icon.png";
 import ImgHome from "../assets/home-icon.png";
 import ImgDocumento from "../assets/documento-icon.png";
@@ -19,6 +20,7 @@ const ABA_DIREITA = [
 const FAB_SIZE = 56;
 
 const BarraDeNavegacao = ({ abaAtiva = "home" }) => {
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const [larguraContainer, setLarguraContainer] = useState(0);
 
@@ -35,7 +37,7 @@ const BarraDeNavegacao = ({ abaAtiva = "home" }) => {
 
   return (
     <View
-      style={styles.container}
+      style={[styles.container, { paddingBottom: 12 + insets.bottom }]}
       onLayout={(e) => setLarguraContainer(e.nativeEvent.layout.width)}
     >
       {ABA_ESQUERDA.map((aba) => {

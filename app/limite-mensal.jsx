@@ -154,6 +154,7 @@ export default function LimiteMensalScreen() {
         <TextInput
           style={styles.input}
           placeholder="Valor Do Limite"
+          placeholderTextColor="rgba(26, 26, 46, 0.55)"
           keyboardType="decimal-pad"
           value={amount}
           onChangeText={onChangeAmount}

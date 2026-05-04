@@ -43,12 +43,24 @@ export default function ContasScreen() {
   const [accounts, setAccounts] = useState([]);
   const [name, setName] = useState("");
   const [type, setType] = useState("WALLET");
-  const [balance, setBalance] = useState("0");
+  const [balance, setBalance] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [deleteModal, setDeleteModal] = useState({
     visible: false,
     item: null,
   });
+
+  const handleBalanceChange = (value) => {
+    const sanitized = value.replace(/[^0-9.,]/g, "");
+    const [whole, decimalPart] = sanitized.split(/[,\.]/);
+    if (decimalPart !== undefined) {
+      setBalance(
+        `${whole || "0"},${decimalPart.replace(/[^0-9]/g, "")}`,
+      );
+      return;
+    }
+    setBalance(whole);
+  };
 
   const loadAccounts = async () => {
     try {
@@ -85,7 +97,7 @@ export default function ContasScreen() {
         balance: Number(balance.replace(",", ".")),
       });
       setName("");
-      setBalance("0");
+      setBalance("");
       await loadAccounts();
     } catch (error) {
       // Erro já foi exibido pelo apiClient
@@ -122,15 +134,17 @@ export default function ContasScreen() {
         <TextInput
           style={styles.input}
           placeholder="Nome Da Conta"
+          placeholderTextColor="rgba(26, 26, 46, 0.55)"
           value={name}
           onChangeText={setName}
         />
         <TextInput
           style={styles.input}
           placeholder="Saldo Inicial"
+          placeholderTextColor="rgba(26, 26, 46, 0.55)"
           keyboardType="decimal-pad"
           value={balance}
-          onChangeText={setBalance}
+          onChangeText={handleBalanceChange}
         />
 
         <View style={styles.types}>

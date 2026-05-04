@@ -106,8 +106,18 @@ export const financeApi = {
       body: payload,
     }),
 
+  generateInsight: (token, payload) =>
+    apiRequest("/api/v1/ai-insights/generate", {
+      method: "POST",
+      token,
+      body: payload,
+    }),
+
   listImportsByUser: (token, userId) =>
     apiRequest(`/api/v1/imports/user/${userId}`, { token }),
+
+  getInsightById: (token, insightId) =>
+  apiRequest(`/api/v1/ai-insights/${insightId}`, { token }),
 
   createImport: (token, payload) =>
     apiRequest("/api/v1/imports", {

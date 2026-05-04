@@ -80,6 +80,7 @@ export default function ImportacoesScreen() {
         <TextInput
           style={styles.input}
           placeholder="Nome Do Arquivo (CSV)"
+          placeholderTextColor="rgba(26, 26, 46, 0.55)"
           value={fileName}
           onChangeText={setFileName}
         />
