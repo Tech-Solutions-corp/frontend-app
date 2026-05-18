@@ -60,6 +60,7 @@ const styles = StyleSheet.create({
   safe: {
     flex: 1,
     backgroundColor: COLORS.page,
+    overflow: "hidden",
   },
   animatedLayer: {
     flex: 1,
