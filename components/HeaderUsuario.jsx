@@ -1,6 +1,7 @@
 import React from "react";
-import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, Image, StyleSheet } from "react-native";
 import NotificationBell from "./NotificationBell";
+import LanguageToggle from "./LanguageToggle";
 
 const HeaderUsuario = ({ nome, avatar }) => {
   const initials = (nome || "U")
@@ -25,7 +26,11 @@ const HeaderUsuario = ({ nome, avatar }) => {
           <Text style={styles.nome}>{nome}</Text>
         </View>
       </View>
-      <NotificationBell />
+
+      <View style={styles.direita}>
+        <LanguageToggle />
+        <NotificationBell />
+      </View>
     </View>
   );
 };
@@ -70,12 +75,10 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#1A1A2E",
   },
-  headerBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
+  direita: {
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    gap: 8,
   },
   btn: {
     width: 23,

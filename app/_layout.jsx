@@ -3,6 +3,7 @@ import React from "react";
 import { Stack } from "expo-router";
 import { AuthProvider, useAuth } from "../context/AuthContext";
 import { ErrorProvider } from "../context/ErrorContext";
+import { I18nProvider } from "../context/I18nContext";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { View, StyleSheet } from "react-native";
 import BarraDeNavegacao from "../components/BarraDeNavegacao";
@@ -30,9 +31,11 @@ export default function Layout() {
   return (
     <ErrorProvider>
       <AuthProvider>
-        <SafeAreaProvider>
-          <LayoutContent />
-        </SafeAreaProvider>
+        <I18nProvider>
+          <SafeAreaProvider>
+            <LayoutContent />
+          </SafeAreaProvider>
+        </I18nProvider>
       </AuthProvider>
     </ErrorProvider>
   );

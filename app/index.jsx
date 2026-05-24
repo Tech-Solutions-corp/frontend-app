@@ -3,11 +3,13 @@ import { Alert, Text, View, StyleSheet } from "react-native";
 import { router } from "expo-router";
 import { useAuth } from "../context/AuthContext";
 import { useRequireAuth } from "../hooks/useRequireAuth";
+import { useI18n } from "../context/I18nContext";
 import { financeApi } from "../services/financeApi";
 import ThemedScreen from "../components/ThemedScreen";
 import HeaderUsuario from "../components/HeaderUsuario";
 import CardLimite from "../components/CardLimite";
 import CardCategoria from "../components/CardCategoria";
+import WelcomeModal from "../components/WelcomeModal";
 import { COLORS } from "../constants/theme";
 
 const CATEGORY_COLORS = [
@@ -64,7 +66,8 @@ function getCategoryVisual(name, index) {
 
 export default function HomeScreen() {
   const { loading: authLoading, isAuthenticated } = useRequireAuth();
-  const { token, userId, userName, userEmail } = useAuth();
+  const { token, userId, userName, userEmail, isFirstLogin, clearFirstLogin } = useAuth();
+  const { t } = useI18n();
 
   const [accounts, setAccounts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -218,19 +221,21 @@ export default function HomeScreen() {
 
   return (
     <ThemedScreen>
+      <WelcomeModal visible={isFirstLogin} onClose={clearFirstLogin} />
+
       <HeaderUsuario nome={userName || userEmail || "Usuário"} />
 
       <CardLimite
-        title="Limite Mensal"
+        title={t("monthly_limit")}
         subtitle={
           currentMonthlyLimit
             ? formatMonthYearFromIso(currentMonthlyLimit.referenceMonth)
-            : `${formatMonthYearFromIso(currentMonthKey)} Sem Limite Cadastrado`
+            : `${formatMonthYearFromIso(currentMonthKey)} — ${t("no_limit_registered")}`
         }
         metric={
           currentMonthlyLimit
             ? `${formatMoney(expenseTotal)} De ${formatMoney(currentMonthlyLimit.amount)}`
-            : `${formatMoney(expenseTotal)} Gasto No Mês`
+            : `${formatMoney(expenseTotal)} ${t("spent_in_month")}`
         }
         percent={monthlyLimitPercent}
         aoVerGastos={() => router.push("/gastos")}
@@ -238,7 +243,7 @@ export default function HomeScreen() {
       />
 
       <View style={styles.secaoHeader}>
-        <Text style={styles.secaoTitulo}>Gastos Por Categoria</Text>
+        <Text style={styles.secaoTitulo}>{t("spending_by_category")}</Text>
         <View style={styles.badge}>
           <Text style={styles.badgeTexto}>{categoryCards.length}</Text>
         </View>
@@ -249,20 +254,18 @@ export default function HomeScreen() {
           <CardCategoria key={category.id} {...category} />
         ))
       ) : (
-        <Text style={styles.emptyState}>
-          Ainda Não Há Gastos Registrados Para Resumir.
-        </Text>
+        <Text style={styles.emptyState}>{t("no_expenses_yet")}</Text>
       )}
 
       <View style={styles.summaryCard}>
-        <Text style={styles.summaryLabel}>Contas Ativas</Text>
+        <Text style={styles.summaryLabel}>{t("active_accounts")}</Text>
         <Text style={styles.summaryValue}>{accounts.length}</Text>
         <Text style={styles.summaryMeta}>
-          Receitas: {formatMoney(incomeTotal)} · Despesas:{" "}
+          {t("income")}: {formatMoney(incomeTotal)} · {t("expenses")}:{" "}
           {formatMoney(expenseTotal)}
         </Text>
         <View style={styles.balanceDivider} />
-        <Text style={styles.summaryLabel}>Saldo Total</Text>
+        <Text style={styles.summaryLabel}>{t("total_balance")}</Text>
         <Text style={[styles.balanceValue, { color: balanceColor }]}>
           {formatMoney(totalBalance)}
         </Text>
@@ -271,7 +274,7 @@ export default function HomeScreen() {
       {accountsSummary.length > 0 && (
         <>
           <View style={styles.secaoHeader}>
-            <Text style={styles.secaoTitulo}>Resumo Por Conta</Text>
+            <Text style={styles.secaoTitulo}>{t("account_summary")}</Text>
           </View>
           {accountsSummary.map((account) => (
             <View key={String(account.id)} style={styles.accountSummaryCard}>
@@ -288,10 +291,10 @@ export default function HomeScreen() {
               </View>
               <View style={styles.accountDetails}>
                 <Text style={styles.accountMeta}>
-                  Receita: {formatMoney(account.income)}
+                  {t("revenue")}: {formatMoney(account.income)}
                 </Text>
                 <Text style={styles.accountMeta}>
-                  Despesa: {formatMoney(account.expense)}
+                  {t("expense")}: {formatMoney(account.expense)}
                 </Text>
               </View>
             </View>

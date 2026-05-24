@@ -14,6 +14,7 @@ const TOKEN_KEY = "auth_token";
 const USER_ID_KEY = "auth_user_id";
 const USER_EMAIL_KEY = "auth_user_email";
 const USER_NAME_KEY = "auth_user_name";
+const FIRST_LOGIN_KEY = "auth_first_login";
 
 const AuthContext = createContext(null);
 
@@ -23,22 +24,26 @@ export function AuthProvider({ children }) {
   const [userEmail, setUserEmail] = useState(null);
   const [userName, setUserName] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isFirstLogin, setIsFirstLogin] = useState(false);
 
   useEffect(() => {
     const bootstrap = async () => {
       try {
-        const [savedToken, savedUserId, savedEmail, savedName] =
+        const [savedToken, savedUserId, savedEmail, savedName, savedFirstLogin] =
           await Promise.all([
             AsyncStorage.getItem(TOKEN_KEY),
             AsyncStorage.getItem(USER_ID_KEY),
             AsyncStorage.getItem(USER_EMAIL_KEY),
             AsyncStorage.getItem(USER_NAME_KEY),
+            AsyncStorage.getItem(FIRST_LOGIN_KEY),
           ]);
 
         setToken(savedToken);
         setUserId(savedUserId);
         setUserEmail(savedEmail);
         setUserName(savedName);
+        // savedFirstLogin === null significa que nunca fez login antes
+        setIsFirstLogin(savedFirstLogin === null && Boolean(savedToken));
       } finally {
         setLoading(false);
       }
@@ -49,14 +54,21 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     const auth = await financeApi.login(email, password);
+
+    // Verifica se é o primeiro login ANTES de salvar o token
+    const previousLogin = await AsyncStorage.getItem(FIRST_LOGIN_KEY);
+    const firstTime = previousLogin === null;
+
     setToken(auth.token);
     setUserId(String(auth.id));
     setUserEmail(email);
+    setIsFirstLogin(firstTime);
 
     await Promise.all([
       AsyncStorage.setItem(TOKEN_KEY, auth.token),
       AsyncStorage.setItem(USER_ID_KEY, String(auth.id)),
       AsyncStorage.setItem(USER_EMAIL_KEY, email),
+      AsyncStorage.setItem(FIRST_LOGIN_KEY, "done"),
     ]);
 
     try {
@@ -77,17 +89,21 @@ export function AuthProvider({ children }) {
     await login(email, password);
   };
 
+  const clearFirstLogin = () => setIsFirstLogin(false);
+
   const logout = async () => {
     await Promise.all([
       AsyncStorage.removeItem(TOKEN_KEY),
       AsyncStorage.removeItem(USER_ID_KEY),
       AsyncStorage.removeItem(USER_EMAIL_KEY),
       AsyncStorage.removeItem(USER_NAME_KEY),
+      // Não remove FIRST_LOGIN_KEY — preservamos a flag entre sessões
     ]);
     setToken(null);
     setUserId(null);
     setUserEmail(null);
     setUserName(null);
+    setIsFirstLogin(false);
   };
 
   useEffect(() => {
@@ -105,6 +121,8 @@ export function AuthProvider({ children }) {
       userName,
       loading,
       isAuthenticated: Boolean(token && userId),
+      isFirstLogin,
+      clearFirstLogin,
       login,
       register,
       logout,
@@ -113,7 +131,7 @@ export function AuthProvider({ children }) {
       changePassword: (payload) => financeApi.changePassword(token, payload),
       changeEmail: (payload) => financeApi.changeEmail(token, payload),
     }),
-    [token, userId, userEmail, userName, loading],
+    [token, userId, userEmail, userName, loading, isFirstLogin],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
