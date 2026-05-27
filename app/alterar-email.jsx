@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { useAuth } from "../context/AuthContext";
+import { useI18n } from "../context/I18nContext";
 import { useRequireAuth } from "../hooks/useRequireAuth";
 import ThemedScreen from "../components/ThemedScreen";
 import { COLORS, SHADOW } from "../constants/theme";
@@ -16,6 +17,7 @@ import { COLORS, SHADOW } from "../constants/theme";
 export default function AlterarEmailScreen() {
   const { loading: authLoading, isAuthenticated, userEmail } = useRequireAuth();
   const { changeEmail, logout } = useAuth();
+  const { t } = useI18n();
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newEmail, setNewEmail] = useState("");
@@ -23,12 +25,12 @@ export default function AlterarEmailScreen() {
 
   const handleSubmit = async () => {
     if (!currentPassword || !newEmail) {
-      Alert.alert("Validacao", "Preencha todos os campos.");
+      Alert.alert(t("validation"), t("fill_all_fields"));
       return;
     }
 
     if (newEmail === userEmail) {
-      Alert.alert("Validacao", "Novo email deve ser diferente do email atual.");
+      Alert.alert(t("validation"), t("new_email_different"));
       return;
     }
 
@@ -36,13 +38,13 @@ export default function AlterarEmailScreen() {
       setSubmitting(true);
       await changeEmail({ currentPassword, newEmail });
       Alert.alert(
-        "Sucesso",
-        "Email alterado com sucesso. Você será redirecionado para fazer login novamente.",
+        t("success"),
+        t("email_changed"),
       );
       await logout();
       router.replace("/login");
     } catch (error) {
-      Alert.alert("Erro", error.message || "Erro ao alterar o email.");
+      Alert.alert(t("error"), error.message || t("error_change_email"));
     } finally {
       setSubmitting(false);
     }
@@ -55,17 +57,17 @@ export default function AlterarEmailScreen() {
   return (
     <ThemedScreen scroll={false}>
       <View style={styles.container}>
-        <Text style={styles.title}>Alterar Email</Text>
+        <Text style={styles.title}>{t("alter_email")}</Text>
         <Text style={styles.subtitle}>
-          Informe sua senha e defina o novo email.
+          {t("inform_password_email")}
         </Text>
 
-        <Text style={styles.label}>Email Atual</Text>
+        <Text style={styles.label}>{t("current_email")}</Text>
         <Text style={styles.email}>{userEmail}</Text>
 
         <TextInput
           style={styles.input}
-          placeholder="Senha Atual"
+          placeholder={t("current_password")}
           placeholderTextColor="rgba(26, 26, 46, 0.55)"
           secureTextEntry
           value={currentPassword}
@@ -74,7 +76,7 @@ export default function AlterarEmailScreen() {
 
         <TextInput
           style={styles.input}
-          placeholder="Novo Email"
+          placeholder={t("new_email")}
           placeholderTextColor="rgba(26, 26, 46, 0.55)"
           keyboardType="email-address"
           autoCapitalize="none"
@@ -88,7 +90,7 @@ export default function AlterarEmailScreen() {
           disabled={submitting}
         >
           <Text style={styles.primaryButtonText}>
-            {submitting ? "Salvando..." : "Salvar Novo Email"}
+            {submitting ? t("saving") : t("save_new_email")}
           </Text>
         </TouchableOpacity>
       </View>

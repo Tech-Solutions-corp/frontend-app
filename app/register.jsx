@@ -9,12 +9,14 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { useAuth } from "../context/AuthContext";
+import { useI18n } from "../context/I18nContext";
 import ThemedScreen from "../components/ThemedScreen";
 import { COLORS, SHADOW } from "../constants/theme";
 import PasswordStrengthIndicator from "../components/PasswordStrengthIndicator";
 
 export default function RegisterScreen() {
   const { register } = useAuth();
+  const { t } = useI18n();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -37,17 +39,17 @@ export default function RegisterScreen() {
 
   const handleSubmit = async () => {
     if (!name || !email || !password) {
-      Alert.alert("Validação", "Preencha Nome, E-mail E Senha.");
+      Alert.alert(t("validation"), t("fill_all_fields"));
       return;
     }
 
     if (!passwordsMatch) {
-      Alert.alert("Validação", "As senhas precisam ser iguais.");
+      Alert.alert(t("validation"), t("passwords_must_match"));
       return;
     }
 
     if (!isPasswordStrongEnough) {
-      Alert.alert("Validação", "A senha precisa ser forte o suficiente.");
+      Alert.alert(t("validation"), t("password_must_be_strong"));
       return;
     }
 
@@ -56,7 +58,7 @@ export default function RegisterScreen() {
       await register({ name: name.trim(), email: email.trim(), password });
       router.replace("/");
     } catch (error) {
-      Alert.alert("Erro", error.message || "Erro ao criar conta.");
+      Alert.alert(t("error"), error.message || t("error_creating_account"));
     } finally {
       setSubmitting(false);
     }
@@ -65,18 +67,18 @@ export default function RegisterScreen() {
   return (
     <ThemedScreen scroll={false}>
       <View style={styles.container}>
-        <Text style={styles.title}>Criar Conta</Text>
+        <Text style={styles.title}>{t("register")}</Text>
 
         <TextInput
           style={styles.input}
-          placeholder="Nome"
+          placeholder={t("name")}
           placeholderTextColor="rgba(26, 26, 46, 0.55)"
           value={name}
           onChangeText={setName}
         />
         <TextInput
           style={styles.input}
-          placeholder="E-mail"
+          placeholder={t("email")}
           placeholderTextColor="rgba(26, 26, 46, 0.55)"
           keyboardType="email-address"
           autoCapitalize="none"
@@ -85,7 +87,7 @@ export default function RegisterScreen() {
         />
         <TextInput
           style={styles.input}
-          placeholder="Senha"
+          placeholder={t("password")}
           placeholderTextColor="rgba(26, 26, 46, 0.55)"
           secureTextEntry
           value={password}
@@ -93,7 +95,7 @@ export default function RegisterScreen() {
         />
         <TextInput
           style={styles.input}
-          placeholder="Confirmar Senha"
+          placeholder={t("confirm_password")}
           placeholderTextColor="rgba(26, 26, 46, 0.55)"
           secureTextEntry
           value={confirmPassword}
@@ -103,7 +105,7 @@ export default function RegisterScreen() {
         <PasswordStrengthIndicator password={password} />
 
         {confirmPassword.length > 0 && !passwordsMatch ? (
-          <Text style={styles.errorText}>As senhas não coincidem.</Text>
+          <Text style={styles.errorText}>{t("passwords_must_match")}</Text>
         ) : null}
 
         <TouchableOpacity
@@ -112,12 +114,12 @@ export default function RegisterScreen() {
           disabled={submitting}
         >
           <Text style={styles.primaryButtonText}>
-            {submitting ? "Criando..." : "Criar conta"}
+            {submitting ? t("creating") : t("register")}
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => router.replace("/login")}>
-          <Text style={styles.link}>Já Tenho Conta</Text>
+          <Text style={styles.link}>{t("already_have_account")}</Text>
         </TouchableOpacity>
       </View>
     </ThemedScreen>

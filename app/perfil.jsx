@@ -3,6 +3,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { router } from "expo-router";
 import { useRequireAuth } from "../hooks/useRequireAuth";
 import { useAuth } from "../context/AuthContext";
+import { useI18n } from "../context/I18nContext";
 import { financeApi } from "../services/financeApi";
 import ThemedScreen from "../components/ThemedScreen";
 import { COLORS, SHADOW } from "../constants/theme";
@@ -11,6 +12,7 @@ import { formatDateTime } from "../utils/dateFormatter";
 export default function PerfilScreen() {
   const { loading: authLoading, isAuthenticated } = useRequireAuth();
   const { token, userEmail, userId, userName, logout } = useAuth();
+  const { t, language, changeLanguage } = useI18n();
   const [profile, setProfile] = useState(null);
 
   useEffect(() => {
@@ -41,28 +43,28 @@ export default function PerfilScreen() {
 
   return (
     <ThemedScreen contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Perfil</Text>
+      <Text style={styles.title}>{t("profile")}</Text>
 
       <View style={styles.card}>
-        <Text style={styles.label}>Nome</Text>
+        <Text style={styles.label}>{t("name")}</Text>
         <Text style={styles.value}>
-          {profile?.name || userName || "Não Informado"}
+          {profile?.name || userName || t("not_informed")}
         </Text>
 
-        <Text style={[styles.label, { marginTop: 10 }]}>E-mail</Text>
+        <Text style={[styles.label, { marginTop: 10 }]}>{t("email")}</Text>
         <Text style={styles.value}>
-          {profile?.email || userEmail || "Não Informado"}
+          {profile?.email || userEmail || t("not_informed")}
         </Text>
 
-        <Text style={[styles.label, { marginTop: 10 }]}>ID Do Usuário</Text>
+        <Text style={[styles.label, { marginTop: 10 }]}>{t("user_id")}</Text>
         <Text style={styles.value}>{profile?.id || userId || "-"}</Text>
 
-        <Text style={[styles.label, { marginTop: 10 }]}>Criado Em</Text>
+        <Text style={[styles.label, { marginTop: 10 }]}>{t("created_at")}</Text>
         <Text style={styles.value}>
           {profile?.createdAt ? formatDateTime(profile.createdAt) : "-"}
         </Text>
 
-        <Text style={[styles.label, { marginTop: 10 }]}>Atualizado Em</Text>
+        <Text style={[styles.label, { marginTop: 10 }]}>{t("updated_at")}</Text>
         <Text style={styles.value}>
           {profile?.updatedAt ? formatDateTime(profile.updatedAt) : "-"}
         </Text>
@@ -72,60 +74,99 @@ export default function PerfilScreen() {
         style={styles.secondaryButton}
         onPress={() => router.push("/alterar-email")}
       >
-        <Text style={styles.secondaryButtonText}>Alterar Email</Text>
+        <Text style={styles.secondaryButtonText}>{t("alter_email")}</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
         style={styles.secondaryButton}
         onPress={() => router.push("/alterar-senha")}
       >
-        <Text style={styles.secondaryButtonText}>Alterar Senha</Text>
+        <Text style={styles.secondaryButtonText}>{t("alter_password")}</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
         style={styles.secondaryButton}
         onPress={() => router.push("/importacoes")}
       >
-        <Text style={styles.secondaryButtonText}>Histórico De Importações</Text>
+        <Text style={styles.secondaryButtonText}>{t("importing_history")}</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
         style={styles.secondaryButton}
         onPress={() => router.push("/contas")}
       >
-        <Text style={styles.secondaryButtonText}>Minhas Contas</Text>
+        <Text style={styles.secondaryButtonText}>{t("my_accounts")}</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
         style={styles.secondaryButton}
         onPress={() => router.push("/categorias")}
       >
-        <Text style={styles.secondaryButtonText}>Minhas Categorias</Text>
+        <Text style={styles.secondaryButtonText}>{t("my_categories")}</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
         style={styles.secondaryButton}
         onPress={() => router.push("/limite-mensal")}
       >
-        <Text style={styles.secondaryButtonText}>Limite Mensal</Text>
+        <Text style={styles.secondaryButtonText}>{t("monthly_limit_page")}</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
         style={styles.secondaryButton}
         onPress={() => router.push("/agenda")}
       >
-        <Text style={styles.secondaryButtonText}>Agenda Financeira</Text>
+        <Text style={styles.secondaryButtonText}>{t("financial_agenda")}</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
         style={styles.secondaryButton}
         onPress={() => router.push("/insights")}
       >
-        <Text style={styles.secondaryButtonText}>Tela De Insights IA</Text>
+        <Text style={styles.secondaryButtonText}>{t("insights_ai")}</Text>
       </TouchableOpacity>
 
+      <View style={styles.languageSection}>
+        <Text style={styles.languageTitle}>{t("language")}</Text>
+        <View style={styles.languageButtonsContainer}>
+          <TouchableOpacity
+            style={[
+              styles.languageButton,
+              language === "pt-BR" && styles.languageButtonActive,
+            ]}
+            onPress={() => changeLanguage("pt-BR")}
+          >
+            <Text
+              style={[
+                styles.languageButtonText,
+                language === "pt-BR" && styles.languageButtonTextActive,
+              ]}
+            >
+              🇧🇷 {t("portuguese")}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.languageButton,
+              language === "en" && styles.languageButtonActive,
+            ]}
+            onPress={() => changeLanguage("en")}
+          >
+            <Text
+              style={[
+                styles.languageButtonText,
+                language === "en" && styles.languageButtonTextActive,
+              ]}
+            >
+              🇺🇸 {t("english")}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
       <TouchableOpacity style={styles.logoutButton} onPress={onLogout}>
-        <Text style={styles.logoutButtonText}>Sair Da Conta</Text>
+        <Text style={styles.logoutButtonText}>{t("logout")}</Text>
       </TouchableOpacity>
     </ThemedScreen>
   );
@@ -160,6 +201,47 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   secondaryButtonText: { color: COLORS.navy, fontWeight: "600" },
+  languageSection: {
+    backgroundColor: COLORS.white,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: COLORS.purple,
+    padding: 14,
+    marginBottom: 12,
+    ...SHADOW,
+  },
+  languageTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: COLORS.indigo,
+    marginBottom: 12,
+  },
+  languageButtonsContainer: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  languageButton: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: COLORS.purple,
+    backgroundColor: COLORS.white,
+    alignItems: "center",
+  },
+  languageButtonActive: {
+    backgroundColor: COLORS.purple,
+    borderColor: COLORS.indigo,
+  },
+  languageButtonText: {
+    color: COLORS.navy,
+    fontWeight: "600",
+    fontSize: 13,
+  },
+  languageButtonTextActive: {
+    color: COLORS.white,
+  },
   logoutButton: {
     marginTop: 12,
     backgroundColor: COLORS.pink,

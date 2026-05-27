@@ -9,11 +9,13 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { useAuth } from "../context/AuthContext";
+import { useI18n } from "../context/I18nContext";
 import ThemedScreen from "../components/ThemedScreen";
 import { COLORS, SHADOW } from "../constants/theme";
 
 export default function LoginScreen() {
   const { login, isAuthenticated, loading } = useAuth();
+  const { t } = useI18n();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -26,7 +28,7 @@ export default function LoginScreen() {
 
   const handleSubmit = async () => {
     if (!email || !password) {
-      Alert.alert("Validação", "Informe E-mail E Senha.");
+      Alert.alert(t("login_validation"), t("inform_email_password"));
       return;
     }
 
@@ -35,7 +37,7 @@ export default function LoginScreen() {
       await login(email.trim(), password);
       router.replace("/");
     } catch (error) {
-      Alert.alert("Erro", error.message || "Erro ao fazer login.");
+      Alert.alert(t("error"), error.message || t("login_error"));
     } finally {
       setSubmitting(false);
     }
@@ -44,14 +46,14 @@ export default function LoginScreen() {
   return (
     <ThemedScreen scroll={false}>
       <View style={styles.container}>
-        <Text style={styles.title}>Entrar</Text>
+        <Text style={styles.title}>{t("enter")}</Text>
         <Text style={styles.subtitle}>
-          Acesso Seguro Da Sua Vida Financeira
+          {t("secure_access")}
         </Text>
 
         <TextInput
           style={styles.input}
-          placeholder="E-mail"
+          placeholder={t("email")}
           placeholderTextColor="rgba(26, 26, 46, 0.55)"
           keyboardType="email-address"
           autoCapitalize="none"
@@ -60,7 +62,7 @@ export default function LoginScreen() {
         />
         <TextInput
           style={styles.input}
-          placeholder="Senha"
+          placeholder={t("password")}
           placeholderTextColor="rgba(26, 26, 46, 0.55)"
           secureTextEntry
           value={password}
@@ -73,16 +75,16 @@ export default function LoginScreen() {
           disabled={submitting}
         >
           <Text style={styles.primaryButtonText}>
-            {submitting ? "Entrando..." : "Entrar"}
+            {submitting ? t("logging_in") : t("enter")}
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => router.push("/recuperar-senha")}>
-          <Text style={styles.link}>Esqueci Minha Senha</Text>
+          <Text style={styles.link}>{t("forgot_password")}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => router.push("/register")}>
-          <Text style={styles.link}>Criar Nova Conta</Text>
+          <Text style={styles.link}>{t("create_account")}</Text>
         </TouchableOpacity>
       </View>
     </ThemedScreen>

@@ -10,6 +10,7 @@ import {
   View,
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
+import { useI18n } from "../context/I18nContext";
 import { useRequireAuth } from "../hooks/useRequireAuth";
 import { financeApi } from "../services/financeApi";
 import ThemedScreen from "../components/ThemedScreen";
@@ -24,11 +25,11 @@ const ACCOUNT_TYPES = [
 ];
 
 const ACCOUNT_TYPE_LABELS = {
-  WALLET: "Carteira",
-  BANK: "Banco",
-  SAVINGS: "Poupança",
-  CREDIT_CARD: "Cartão De Crédito",
-  INVESTMENT: "Investimento",
+  WALLET: "wallet",
+  BANK: "bank",
+  SAVINGS: "savings",
+  CREDIT_CARD: "credit_card",
+  INVESTMENT: "investment",
 };
 
 function money(value) {
@@ -40,6 +41,7 @@ function money(value) {
 export default function ContasScreen() {
   const { loading: authLoading, isAuthenticated } = useRequireAuth();
   const { token, userId } = useAuth();
+  const { t } = useI18n();
 
   const [accounts, setAccounts] = useState([]);
   const [name, setName] = useState("");
@@ -68,7 +70,7 @@ export default function ContasScreen() {
       const data = await financeApi.listAccountsByUser(token, userId);
       setAccounts(data || []);
     } catch (error) {
-      Alert.alert("Erro", error.message || "Erro ao carregar contas.");
+      Alert.alert(t("error"), error.message || t("error_loading_accounts"));
     }
   };
 
@@ -101,7 +103,7 @@ export default function ContasScreen() {
       setBalance("");
       await loadAccounts();
     } catch (error) {
-      Alert.alert("Erro", error.message || "Erro ao criar conta.");
+      Alert.alert(t("error"), error.message || t("error_creating_account"));
     } finally {
       setSubmitting(false);
     }
@@ -115,7 +117,7 @@ export default function ContasScreen() {
       await financeApi.deleteAccount(token, deleteModal.item.id);
       await loadAccounts();
     } catch (error) {
-      Alert.alert("Erro", error.message || "Erro ao excluir conta.");
+      Alert.alert(t("error"), error.message || t("error_deleting_account"));
     } finally {
       closeModal();
     }
@@ -127,21 +129,21 @@ export default function ContasScreen() {
 
   return (
     <ThemedScreen contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Contas</Text>
-      <Text style={styles.total}>Saldo Total: {money(total)}</Text>
+      <Text style={styles.title}>{t("accounts")}</Text>
+      <Text style={styles.total}>{t("total_balance")} {money(total)}</Text>
 
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Nova Conta</Text>
+        <Text style={styles.cardTitle}>{t("new_account")}</Text>
         <TextInput
           style={styles.input}
-          placeholder="Nome Da Conta"
+          placeholder={t("account_name")}
           placeholderTextColor="rgba(26, 26, 46, 0.55)"
           value={name}
           onChangeText={setName}
         />
         <TextInput
           style={styles.input}
-          placeholder="Saldo Inicial"
+          placeholder={t("initial_balance")}
           placeholderTextColor="rgba(26, 26, 46, 0.55)"
           keyboardType="decimal-pad"
           value={balance}
@@ -155,7 +157,7 @@ export default function ContasScreen() {
               style={[styles.tag, type === item && styles.tagActive]}
               onPress={() => setType(item)}
             >
-              <Text style={styles.tagText}>{ACCOUNT_TYPE_LABELS[item]}</Text>
+              <Text style={styles.tagText}>{t(ACCOUNT_TYPE_LABELS[item])}</Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -166,7 +168,7 @@ export default function ContasScreen() {
           disabled={submitting}
         >
           <Text style={styles.primaryButtonText}>
-            {submitting ? "Criando..." : "Criar Conta"}
+            {submitting ? t("creating") : t("create")}
           </Text>
         </TouchableOpacity>
       </View>
@@ -185,7 +187,7 @@ export default function ContasScreen() {
               onPress={() => setDeleteModal({ visible: true, item: account })}
               style={styles.deleteBtn}
             >
-              <Text style={styles.deleteText}>Excluir</Text>
+              <Text style={styles.deleteText}>{t("delete")}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -196,27 +198,27 @@ export default function ContasScreen() {
           <View style={styles.modalBackdrop}>
             <TouchableWithoutFeedback>
               <View style={styles.modalCard}>
-                <Text style={styles.modalTitle}>Excluir Conta</Text>
+                <Text style={styles.modalTitle}>{t("delete_account")}</Text>
                 <Text style={styles.modalMessage}>
-                  A conta{" "}
+                  {t("accounts")} {" "}
                   <Text style={{ fontWeight: "700" }}>
                     "{deleteModal.item?.name}"
                   </Text>{" "}
-                  e todas as transações vinculadas serão excluídas.
+                  {t("delete_confirmation")}
                 </Text>
 
                 <TouchableOpacity
                   style={styles.modalBtn}
                   onPress={handleDeleteConfirm}
                 >
-                  <Text style={styles.modalBtnText}>Confirmar Exclusão</Text>
+                  <Text style={styles.modalBtnText}>{t("confirm_deletion")}</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
                   style={styles.modalCancelBtn}
                   onPress={closeModal}
                 >
-                  <Text style={styles.modalCancelText}>Cancelar</Text>
+                  <Text style={styles.modalCancelText}>{t("cancel")}</Text>
                 </TouchableOpacity>
               </View>
             </TouchableWithoutFeedback>
