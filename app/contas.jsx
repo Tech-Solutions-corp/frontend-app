@@ -44,6 +44,8 @@ export default function ContasScreen() {
   const { t } = useI18n();
 
   const [accounts, setAccounts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [selectedReassignCategoryId, setSelectedReassignCategoryId] = useState(null);
   const [name, setName] = useState("");
   const [type, setType] = useState("WALLET");
   const [balance, setBalance] = useState("");
@@ -51,6 +53,7 @@ export default function ContasScreen() {
   const [deleteModal, setDeleteModal] = useState({
     visible: false,
     item: null,
+    step: "main",
   });
 
   const handleBalanceChange = (value) => {
@@ -74,10 +77,22 @@ export default function ContasScreen() {
     }
   };
 
+  const loadCategories = async () => {
+    try {
+      const data = await financeApi.listCategoriesByUser(token, userId);
+      setCategories(data || []);
+    } catch (err) {
+      // ignore
+    }
+  };
+
   useEffect(() => {
     if (isAuthenticated) {
       loadAccounts();
     }
+  }, [isAuthenticated, token, userId]);
+  useEffect(() => {
+    if (isAuthenticated) loadCategories();
   }, [isAuthenticated, token, userId]);
 
   const total = useMemo(
@@ -109,12 +124,23 @@ export default function ContasScreen() {
     }
   };
 
-  const closeModal = () => setDeleteModal({ visible: false, item: null });
+  const closeModal = () =>
+    setDeleteModal({ visible: false, item: null, step: "main" });
 
-  const handleDeleteConfirm = async () => {
+  const otherAccounts = useMemo(() => {
+    if (!deleteModal.item) return [];
+    return accounts.filter((a) => a.id !== deleteModal.item.id);
+  }, [deleteModal.item, accounts]);
+
+  const handleDeleteConfirm = async (reassignToAccountId = null, reassignCategoryId = null) => {
     if (!deleteModal.item) return;
     try {
-      await financeApi.deleteAccount(token, deleteModal.item.id);
+      await financeApi.deleteAccount(
+        token,
+        deleteModal.item.id,
+        reassignToAccountId,
+        reassignCategoryId,
+      );
       await loadAccounts();
     } catch (error) {
       Alert.alert(t("error"), error.message || t("error_deleting_account"));
@@ -183,10 +209,12 @@ export default function ContasScreen() {
                 {money(account.balance)}
               </Text>
             </View>
-            <TouchableOpacity
-              onPress={() => setDeleteModal({ visible: true, item: account })}
-              style={styles.deleteBtn}
-            >
+              <TouchableOpacity
+                onPress={() =>
+                  setDeleteModal({ visible: true, item: account, step: "main" })
+                }
+                style={styles.deleteBtn}
+              >
               <Text style={styles.deleteText}>{t("delete")}</Text>
             </TouchableOpacity>
           </View>
@@ -197,30 +225,100 @@ export default function ContasScreen() {
         <TouchableWithoutFeedback onPress={closeModal}>
           <View style={styles.modalBackdrop}>
             <TouchableWithoutFeedback>
-              <View style={styles.modalCard}>
-                <Text style={styles.modalTitle}>{t("delete_account")}</Text>
-                <Text style={styles.modalMessage}>
-                  {t("accounts")} {" "}
-                  <Text style={{ fontWeight: "700" }}>
-                    "{deleteModal.item?.name}"
-                  </Text>{" "}
-                  {t("delete_confirmation")}
-                </Text>
+                <View style={styles.modalCard}>
+                  {deleteModal.step === "main" && (
+                    <>
+                      <Text style={styles.modalTitle}>{t("delete_account")}</Text>
+                      <Text style={styles.modalMessage}>
+                        {t("accounts")} {" "}
+                        <Text style={{ fontWeight: "700" }}>
+                          "{deleteModal.item?.name}"
+                        </Text>{" "}
+                        {t("delete_confirmation")}
+                      </Text>
 
-                <TouchableOpacity
-                  style={styles.modalBtn}
-                  onPress={handleDeleteConfirm}
-                >
-                  <Text style={styles.modalBtnText}>{t("confirm_deletion")}</Text>
-                </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.modalBtn}
+                        onPress={() => handleDeleteConfirm(null)}
+                      >
+                        <Text style={styles.modalBtnText}>
+                          Excluir transações relacionadas
+                        </Text>
+                      </TouchableOpacity>
 
-                <TouchableOpacity
-                  style={styles.modalCancelBtn}
-                  onPress={closeModal}
-                >
-                  <Text style={styles.modalCancelText}>{t("cancel")}</Text>
-                </TouchableOpacity>
-              </View>
+                      <TouchableOpacity
+                        style={[
+                          styles.modalReassignBtn,
+                          otherAccounts.length === 0 && { opacity: 0.5 },
+                        ]}
+                        onPress={() =>
+                          otherAccounts.length > 0 && setDeleteModal((prev) => ({ ...prev, step: "reassign" }))
+                        }
+                        disabled={otherAccounts.length === 0}
+                      >
+                        <Text style={styles.modalReassignBtnText}>
+                          {otherAccounts.length > 0
+                            ? "Reatribuir transações..."
+                            : "Reatribuir transações (nenhuma outra conta)"}
+                        </Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={styles.modalCancelBtn}
+                        onPress={closeModal}
+                      >
+                        <Text style={styles.modalCancelText}>{t("cancel")}</Text>
+                      </TouchableOpacity>
+                    </>
+                  )}
+
+                  {deleteModal.step === "reassign" && (
+                    <>
+                      <Text style={styles.modalTitle}>Reatribuir para</Text>
+                      <Text style={styles.modalMessage}>
+                        Escolha a conta de destino:
+                      </Text>
+
+                      <Text style={{ marginBottom: 6, color: COLORS.navy, fontWeight: "600" }}>
+                        Opcional - alterar categoria
+                      </Text>
+                      <View style={{ marginBottom: 8, flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+                        <TouchableOpacity
+                          key="none-cat"
+                          style={[styles.tag, selectedReassignCategoryId === null && styles.tagActive]}
+                          onPress={() => setSelectedReassignCategoryId(null)}
+                        >
+                          <Text style={styles.tagText}>Manter categorias</Text>
+                        </TouchableOpacity>
+                        {categories.map((c) => (
+                          <TouchableOpacity
+                            key={String(c.id)}
+                            style={[styles.tag, selectedReassignCategoryId === c.id && styles.tagActive]}
+                            onPress={() => setSelectedReassignCategoryId(c.id)}
+                          >
+                            <Text style={styles.tagText}>{c.name}</Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+
+                      {otherAccounts.map((a) => (
+                        <TouchableOpacity
+                          key={String(a.id)}
+                          style={styles.modalTargetBtn}
+                          onPress={() => handleDeleteConfirm(a.id, selectedReassignCategoryId)}
+                        >
+                          <Text style={styles.modalTargetBtnText}>{a.name}</Text>
+                        </TouchableOpacity>
+                      ))}
+                      <TouchableOpacity
+                        style={styles.modalCancelBtn}
+                        onPress={closeModal}
+                      >
+                        <Text style={styles.modalCancelText}>Cancelar</Text>
+                      </TouchableOpacity>
+                    </>
+                  )}
+                </View>
             </TouchableWithoutFeedback>
           </View>
         </TouchableWithoutFeedback>
@@ -341,6 +439,30 @@ const styles = StyleSheet.create({
   modalBtnText: {
     color: "#DC2626",
     fontWeight: "700",
+  },
+  modalReassignBtn: {
+    backgroundColor: "#FFE5CC",
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  modalReassignBtnText: {
+    color: "#D97706",
+    fontWeight: "700",
+  },
+  modalTargetBtn: {
+    backgroundColor: "#F3E8FF",
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: "center",
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: COLORS.purple,
+  },
+  modalTargetBtnText: {
+    color: COLORS.navy,
+    fontWeight: "600",
   },
   modalCancelBtn: {
     marginTop: 4,

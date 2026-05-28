@@ -183,19 +183,15 @@ export default function CategoriasScreen() {
                         Remover (Deixar Sem Categoria)
                       </Text>
                     </TouchableOpacity>
-                    {otherCategories.length > 0 && (
-                      <TouchableOpacity
-                        style={styles.modalBtn}
-                        onPress={() =>
-                          setDeleteModal((prev) => ({
-                            ...prev,
-                            step: "reassign",
-                          }))
-                        }
-                      >
-                        <Text style={styles.modalBtnText}>Reatribuir...</Text>
-                      </TouchableOpacity>
-                    )}
+                    <TouchableOpacity
+                      style={[styles.modalReassignBtn, otherCategories.length === 0 && { opacity: 0.5 }]}
+                      onPress={() => otherCategories.length > 0 && setDeleteModal((prev) => ({ ...prev, step: "reassign" }))}
+                      disabled={otherCategories.length === 0}
+                    >
+                      <Text style={styles.modalReassignBtnText}>
+                        {otherCategories.length > 0 ? "Reatribuir para outra..." : "Reatribuir (nenhuma categoria)"}
+                      </Text>
+                    </TouchableOpacity>
                     <TouchableOpacity
                       style={styles.modalCancelBtn}
                       onPress={closeModal}
@@ -209,15 +205,15 @@ export default function CategoriasScreen() {
                   <>
                     <Text style={styles.modalTitle}>Reatribuir Para</Text>
                     <Text style={styles.modalMessage}>
-                      Escolha a categoria destino:
+                      Escolha a categoria de destino:
                     </Text>
                     {otherCategories.map((c) => (
                       <TouchableOpacity
                         key={String(c.id)}
-                        style={styles.modalBtn}
+                        style={styles.modalTargetBtn}
                         onPress={() => handleDeleteConfirm(c.id)}
                       >
-                        <Text style={styles.modalBtnText}>{c.name}</Text>
+                        <Text style={styles.modalTargetBtnText}>{c.name}</Text>
                       </TouchableOpacity>
                     ))}
                     <TouchableOpacity
@@ -339,13 +335,37 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   modalBtn: {
-    backgroundColor: "#F3E8FF",
+    backgroundColor: "#FEE2E2",
     borderRadius: 10,
     paddingVertical: 12,
     alignItems: "center",
     marginBottom: 8,
   },
   modalBtnText: {
+    color: "#DC2626",
+    fontWeight: "600",
+  },
+  modalReassignBtn: {
+    backgroundColor: "#FFE5CC",
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  modalReassignBtnText: {
+    color: "#D97706",
+    fontWeight: "700",
+  },
+  modalTargetBtn: {
+    backgroundColor: "#F3E8FF",
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: "center",
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: COLORS.purple,
+  },
+  modalTargetBtnText: {
     color: COLORS.navy,
     fontWeight: "600",
   },

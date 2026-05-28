@@ -1,10 +1,12 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
   Alert,
+  Modal,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
 } from "react-native";
 import { router } from "expo-router";
@@ -34,6 +36,16 @@ export default function GastosScreen() {
   const [selectedAccountId, setSelectedAccountId] = useState(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
+
+  const [editModal, setEditModal] = useState({
+    visible: false,
+    transaction: null,
+    description: "",
+    amount: "",
+    type: "EXPENSE",
+    accountId: null,
+    categoryId: null,
+  });
 
   const hasAccounts = accounts.length > 0;
 
@@ -118,6 +130,79 @@ export default function GastosScreen() {
     } finally {
       setRefreshing(false);
     }
+  };
+
+  const openEditModal = (transaction) => {
+    setEditModal({
+      visible: true,
+      transaction,
+      description: transaction.transactionDescription,
+      amount: toCurrency(transaction.amount).substring(3),
+      type: transaction.transactionType,
+      accountId: String(transaction.accountId),
+      categoryId: transaction.categoryId ? String(transaction.categoryId) : null,
+    });
+  };
+
+  const closeEditModal = () => {
+    setEditModal({
+      visible: false,
+      transaction: null,
+      description: "",
+      amount: "",
+      type: "EXPENSE",
+      accountId: null,
+      categoryId: null,
+    });
+  };
+
+  const saveTransaction = async () => {
+    if (!editModal.description || !editModal.amount) {
+      Alert.alert("Validação", "Descrição e valor são obrigatórios.");
+      return;
+    }
+
+    try {
+      setRefreshing(true);
+      await financeApi.updateTransaction(token, editModal.transaction.id, {
+        userId: Number(userId),
+        accountId: Number(editModal.accountId),
+        categoryId: editModal.categoryId ? Number(editModal.categoryId) : null,
+        transactionDescription: editModal.description,
+        amount: Number(editModal.amount.replace(",", ".")),
+        transactionDate: new Date().toISOString().slice(0, 10),
+        transactionType: editModal.type,
+      });
+
+      await loadData();
+      closeEditModal();
+    } catch (error) {
+      Alert.alert("Erro", error.message || "Erro ao atualizar transação.");
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  const deleteTransaction = async () => {
+    Alert.alert("Confirmar", "Tem certeza que deseja deletar esta transação?", [
+      { text: "Cancelar", style: "cancel" },
+      {
+        text: "Deletar",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            setRefreshing(true);
+            await financeApi.deleteTransaction(token, editModal.transaction.id);
+            await loadData();
+            closeEditModal();
+          } catch (error) {
+            Alert.alert("Erro", error.message || "Erro ao deletar transação.");
+          } finally {
+            setRefreshing(false);
+          }
+        },
+      },
+    ]);
   };
 
   if (authLoading || !isAuthenticated) {
@@ -238,7 +323,11 @@ export default function GastosScreen() {
         );
         const isIncome = tx.transactionType === "INCOME";
         return (
-          <View key={String(tx.id)} style={styles.item}>
+          <TouchableOpacity
+            key={String(tx.id)}
+            style={styles.item}
+            onPress={() => openEditModal(tx)}
+          >
             <View style={styles.itemHeader}>
               <View>
                 <Text style={styles.itemTitle}>
@@ -272,9 +361,138 @@ export default function GastosScreen() {
                 {isIncome ? "+" : "-"} {toCurrency(tx.amount)}
               </Text>
             </View>
-          </View>
+          </TouchableOpacity>
         );
       })}
+
+      <Modal transparent animationType="fade" visible={editModal.visible}>
+        <TouchableWithoutFeedback onPress={closeEditModal}>
+          <View style={styles.modalBackdrop}>
+            <TouchableWithoutFeedback>
+              <View style={styles.modalCard}>
+                <Text style={styles.cardTitle}>Editar Transação</Text>
+
+                <TextInput
+                  style={styles.input}
+                  placeholder="Descrição"
+                  placeholderTextColor="rgba(26, 26, 46, 0.55)"
+                  value={editModal.description}
+                  onChangeText={(v) =>
+                    setEditModal({ ...editModal, description: v })
+                  }
+                />
+
+                <TextInput
+                  style={styles.input}
+                  placeholder="Valor"
+                  placeholderTextColor="rgba(26, 26, 46, 0.55)"
+                  keyboardType="decimal-pad"
+                  value={editModal.amount}
+                  onChangeText={(v) =>
+                    setEditModal({ ...editModal, amount: v })
+                  }
+                />
+
+                <View style={styles.inlineRow}>
+                  <TouchableOpacity
+                    style={[
+                      styles.tag,
+                      editModal.type === "EXPENSE" && styles.tagActive,
+                    ]}
+                    onPress={() =>
+                      setEditModal({ ...editModal, type: "EXPENSE" })
+                    }
+                  >
+                    <Text style={styles.tagText}>Despesa</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.tag,
+                      editModal.type === "INCOME" && styles.tagActive,
+                    ]}
+                    onPress={() =>
+                      setEditModal({ ...editModal, type: "INCOME" })
+                    }
+                  >
+                    <Text style={styles.tagText}>Receita</Text>
+                  </TouchableOpacity>
+                </View>
+
+                <Text style={styles.label}>Conta</Text>
+                <View style={styles.inlineRowWrap}>
+                  {accounts.map((account) => (
+                    <TouchableOpacity
+                      key={String(account.id)}
+                      style={[
+                        styles.tag,
+                        editModal.accountId === String(account.id) &&
+                          styles.tagActive,
+                      ]}
+                      onPress={() =>
+                        setEditModal({
+                          ...editModal,
+                          accountId: String(account.id),
+                        })
+                      }
+                    >
+                      <Text style={styles.tagText}>{account.name}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                <Text style={styles.label}>Categoria</Text>
+                <View style={styles.inlineRowWrap}>
+                  {categories
+                    .filter((c) => c.type === editModal.type)
+                    .map((category) => (
+                      <TouchableOpacity
+                        key={String(category.id)}
+                        style={[
+                          styles.tag,
+                          editModal.categoryId === String(category.id) &&
+                            styles.tagActive,
+                        ]}
+                        onPress={() =>
+                          setEditModal({
+                            ...editModal,
+                            categoryId: String(category.id),
+                          })
+                        }
+                      >
+                        <Text style={styles.tagText}>{category.name}</Text>
+                      </TouchableOpacity>
+                    ))}
+                </View>
+
+                <TouchableOpacity
+                  style={styles.primaryButton}
+                  onPress={saveTransaction}
+                  disabled={refreshing}
+                >
+                  <Text style={styles.primaryButtonText}>
+                    {refreshing ? "Salvando..." : "Salvar Alterações"}
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.deleteButton}
+                  onPress={deleteTransaction}
+                  disabled={refreshing}
+                >
+                  <Text style={styles.deleteButtonText}>Deletar Transação</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={closeEditModal}
+                >
+                  <Text style={styles.cancelButtonText}>Cancelar</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
     </ThemedScreen>
   );
 }
@@ -361,6 +579,20 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   primaryButtonText: { color: COLORS.white, fontWeight: "700" },
+  deleteButton: {
+    marginTop: 8,
+    backgroundColor: "#FEE2E2",
+    borderRadius: 10,
+    alignItems: "center",
+    paddingVertical: 12,
+  },
+  deleteButtonText: { color: "#DC2626", fontWeight: "700" },
+  cancelButton: {
+    marginTop: 8,
+    alignItems: "center",
+    paddingVertical: 10,
+  },
+  cancelButtonText: { color: COLORS.indigo, fontWeight: "600" },
   secondaryButton: {
     marginTop: 12,
     backgroundColor: COLORS.white,
@@ -416,4 +648,18 @@ const styles = StyleSheet.create({
   itemMeta: { marginTop: 4, color: COLORS.indigo, fontSize: 11 },
   income: { color: COLORS.indigo, fontWeight: "700", fontSize: 14 },
   expense: { color: COLORS.pink, fontWeight: "700", fontSize: 14 },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20,
+  },
+  modalCard: {
+    width: "100%",
+    backgroundColor: COLORS.white,
+    borderRadius: 14,
+    padding: 20,
+    maxHeight: "90%",
+  },
 });

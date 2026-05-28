@@ -5,6 +5,7 @@ export const COLORS = {
   navy: "#313866",
   white: "#FFFFFF",
   page: "#F7F4FF",
+  orange: "#FF9500",
 };
 
 export const SHADOW = {
