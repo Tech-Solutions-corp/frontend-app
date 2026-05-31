@@ -69,6 +69,11 @@ export default function GastosScreen() {
     [categories, selectedType],
   );
 
+  const orderedTransactions = useMemo(
+    () => [...transactions].reverse(),
+    [transactions],
+  );
+
   useEffect(() => {
     if (filteredCategories.length > 0) {
       setSelectedCategoryId(String(filteredCategories[0].id));
@@ -229,7 +234,7 @@ export default function GastosScreen() {
       </TouchableOpacity>
 
       <Text style={styles.sectionTitle}>Histórico</Text>
-      {transactions.map((tx) => {
+      {orderedTransactions.map((tx) => {
         const account = accounts.find(
           (a) => String(a.id) === String(tx.accountId),
         );
