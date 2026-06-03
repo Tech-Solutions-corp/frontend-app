@@ -204,14 +204,18 @@ export default function HomeScreen() {
         ...account,
         income: accountIncome,
         expense: accountExpense,
-        balance: accountIncome - accountExpense,
+        balance: Number(account.balance || 0),
       };
     });
   }, [accounts, transactions]);
 
   const totalBalance = useMemo(
-    () => incomeTotal - expenseTotal,
-    [incomeTotal, expenseTotal],
+    () =>
+      accounts.reduce(
+        (sum, account) => sum + Number(account.balance || 0),
+        0,
+      ),
+    [accounts],
   );
   const balanceColor = totalBalance >= 0 ? "#34D399" : "#FF6B9D";
 
