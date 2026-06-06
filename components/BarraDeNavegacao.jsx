@@ -5,78 +5,43 @@ import ImgCalendario from "../assets/calendario-icon.png";
 import ImgHome from "../assets/home-icon.png";
 import ImgDocumento from "../assets/documento-icon.png";
 import ImgPerfil from "../assets/perfil-icon.png";
-import { useRouter } from "expo-router";
+import ImgDashboard from "../assets/dashboard.png";
+import { useRouter, useSegments } from "expo-router";
 
-const ABA_ESQUERDA = [
+const ABAS = [
   { id: "home", icone: ImgHome },
   { id: "agenda", icone: ImgCalendario },
-];
-
-const ABA_DIREITA = [
+  { id: "dashboard", icone: ImgDashboard },
   { id: "gastos", icone: ImgDocumento },
   { id: "perfil", icone: ImgPerfil },
 ];
 
 const FAB_SIZE = 56;
 
-const BarraDeNavegacao = ({ abaAtiva = "home" }) => {
+const BarraDeNavegacao = () => {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const [larguraContainer, setLarguraContainer] = useState(0);
+  const segmentos = useSegments();
+
+  const abaAtiva = segmentos.length > 0 ? segmentos[0] : "home";
 
   const ROTAS = {
     home: "/",
     agenda: "/agenda",
+    dashboard: "/dashboard",
     gastos: "/gastos",
     perfil: "/perfil",
   };
 
-  const handlePress = (abaId) => {
-    router.replace(ROTAS[abaId]);
-  };
-
   return (
-    <View
-      style={[styles.container, { paddingBottom: 12 + insets.bottom }]}
-      onLayout={(e) => setLarguraContainer(e.nativeEvent.layout.width)}
-    >
-      {ABA_ESQUERDA.map((aba) => {
+    <View style={[styles.container, insets.bottom ]}>
+      {ABAS.map((aba) => {
         const estaAtiva = aba.id === abaAtiva;
         return (
           <TouchableOpacity
             key={aba.id}
             style={styles.aba}
-            onPress={() => handlePress(aba.id)}
-            activeOpacity={0.7}
-          >
-            <Image
-              style={[styles.icone, estaAtiva && styles.iconeAtivo]}
-              source={aba.icone}
-            />
-          </TouchableOpacity>
-        );
-      })}
-
-      <View style={styles.espacoFab} />
-
-      {/* FAB centralizado com base na largura real do container */}
-      {larguraContainer > 0 && (
-        <TouchableOpacity
-          style={[styles.fab, { left: larguraContainer / 2 - FAB_SIZE / 2 }]}
-          activeOpacity={0.85}
-          onPress={() => handlePress("gastos")}
-        >
-          <Text style={styles.fabIcone}>＋</Text>
-        </TouchableOpacity>
-      )}
-
-      {ABA_DIREITA.map((aba) => {
-        const estaAtiva = aba.id === abaAtiva;
-        return (
-          <TouchableOpacity
-            key={aba.id}
-            style={styles.aba}
-            onPress={() => handlePress(aba.id)}
+            onPress={() => router.replace(ROTAS[aba.id])}
             activeOpacity={0.7}
           >
             <Image
@@ -98,7 +63,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     flexDirection: "row",
     backgroundColor: "#FFFFFF",
-    paddingVertical: 12,
+    paddingVertical: 18,
     paddingHorizontal: 20,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
@@ -123,31 +88,7 @@ const styles = StyleSheet.create({
   },
   iconeAtivo: {
     opacity: 1,
-  },
-  espacoFab: {
-    width: 72,
-  },
-  fab: {
-    position: "absolute",
-    top: -30,
-    width: FAB_SIZE,
-    height: FAB_SIZE,
-    borderRadius: FAB_SIZE / 2,
-    backgroundColor: "#6C47FF",
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#6C47FF",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4,
-    shadowRadius: 10,
-    elevation: 8,
-    zIndex: 999,
-  },
-  fabIcone: {
-    fontSize: 28,
-    color: "#FFFFFF",
-    lineHeight: 32,
-  },
+  }
 });
 
 export default BarraDeNavegacao;

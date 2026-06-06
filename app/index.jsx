@@ -8,7 +8,6 @@ import { financeApi } from "../services/financeApi";
 import ThemedScreen from "../components/ThemedScreen";
 import HeaderUsuario from "../components/HeaderUsuario";
 import CardLimite from "../components/CardLimite";
-import CardCategoria from "../components/CardCategoria";
 import WelcomeModal from "../components/WelcomeModal";
 import { COLORS } from "../constants/theme";
 
@@ -27,14 +26,6 @@ function formatMoney(value) {
     .replace(".", ",")}`;
 }
 
-function normalizeKey(value = "") {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-zA-Z]/g, "")
-    .toUpperCase();
-}
-
 function formatMonthYearFromIso(iso) {
   if (!iso) return "";
   try {
@@ -49,28 +40,12 @@ function formatMonthYearFromIso(iso) {
   }
 }
 
-function getCategoryVisual(name, index) {
-  const normalized = normalizeKey(name);
-  const hash = Array.from(normalized).reduce(
-    (sum, character) => sum + character.charCodeAt(0),
-    0,
-  );
-  const color =
-    CATEGORY_COLORS[Math.abs(hash + index) % CATEGORY_COLORS.length];
-
-  return {
-    icone: normalized.charAt(0) || "•",
-    cor: color,
-  };
-}
-
 export default function HomeScreen() {
   const { loading: authLoading, isAuthenticated } = useRequireAuth();
   const { token, userId, userName, userEmail, isFirstLogin, clearFirstLogin } = useAuth();
   const { t } = useI18n();
 
   const [accounts, setAccounts] = useState([]);
-  const [categories, setCategories] = useState([]);
   const [transactions, setTransactions] = useState([]);
   const [monthlyLimits, setMonthlyLimits] = useState([]);
 
@@ -79,16 +54,14 @@ export default function HomeScreen() {
       if (!token || !userId) return;
 
       try {
-        const [accountData, categoryData, transactionData, limitData] =
+        const [accountData, transactionData, limitData] =
           await Promise.all([
             financeApi.listAccountsByUser(token, userId),
-            financeApi.listCategoriesByUser(token, userId),
             financeApi.listTransactionsByUser(token, userId),
             financeApi.listMonthlyLimitsByUser(token, userId),
           ]);
 
         setAccounts(accountData || []);
-        setCategories(categoryData || []);
         setTransactions(transactionData || []);
         setMonthlyLimits(limitData || []);
       } catch (error) {
@@ -148,46 +121,6 @@ export default function HomeScreen() {
     return Math.min(100, Math.round((expenseTotal / limitAmount) * 100));
   }, [currentMonthlyLimit, expenseTotal, spendingPercent]);
 
-  const categoryCards = useMemo(() => {
-    const categoryMap = new Map(
-      categories.map((category) => [String(category.id), category]),
-    );
-    const totalsByCategory = new Map();
-
-    expenseTransactions.forEach((transaction) => {
-      const category = categoryMap.get(String(transaction.categoryId));
-      const categoryName = category?.name || "Sem Categoria";
-      const key = normalizeKey(categoryName);
-      const current = totalsByCategory.get(key) || {
-        nome: categoryName,
-        qtd: 0,
-        total: 0,
-        style: getCategoryVisual(categoryName, totalsByCategory.size),
-      };
-
-      current.qtd += 1;
-      current.total += Number(transaction.amount || 0);
-      totalsByCategory.set(key, current);
-    });
-
-    const totalSpent =
-      Array.from(totalsByCategory.values()).reduce(
-        (sum, item) => sum + item.total,
-        0,
-      ) || 1;
-
-    return Array.from(totalsByCategory.values())
-      .sort((a, b) => b.total - a.total)
-      .map((item, index) => ({
-        id: `${item.nome}-${index}`,
-        nome: item.nome,
-        qtd: item.qtd,
-        percent: Math.max(1, Math.round((item.total / totalSpent) * 100)),
-        icone: item.style.icone,
-        cor: item.style.cor,
-      }));
-  }, [categories, expenseTransactions]);
-
   const accountsSummary = useMemo(() => {
     return accounts.map((account) => {
       const accountTransactions = transactions.filter(
@@ -245,21 +178,6 @@ export default function HomeScreen() {
         aoVerGastos={() => router.push("/gastos")}
         aoRegistrarLimite={() => router.push("/limite-mensal")}
       />
-
-      <View style={styles.secaoHeader}>
-        <Text style={styles.secaoTitulo}>{t("spending_by_category")}</Text>
-        <View style={styles.badge}>
-          <Text style={styles.badgeTexto}>{categoryCards.length}</Text>
-        </View>
-      </View>
-
-      {categoryCards.length > 0 ? (
-        categoryCards.map((category) => (
-          <CardCategoria key={category.id} {...category} />
-        ))
-      ) : (
-        <Text style={styles.emptyState}>{t("no_expenses_yet")}</Text>
-      )}
 
       <View style={styles.summaryCard}>
         <Text style={styles.summaryLabel}>{t("active_accounts")}</Text>

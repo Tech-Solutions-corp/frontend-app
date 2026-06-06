@@ -3,6 +3,8 @@ import { Animated, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS } from "../constants/theme";
 
+const DEFAULT_BOTTOM_PADDING = 140;
+
 export default function ThemedScreen({
   children,
   scroll = true,
@@ -27,6 +29,12 @@ export default function ThemedScreen({
     ]).start();
   }, [opacity, translateY]);
 
+  const combinedContentStyle = [
+    scroll ? styles.scrollContent : styles.fullContent,
+    { paddingBottom: DEFAULT_BOTTOM_PADDING },
+    contentContainerStyle,
+  ];
+
   return (
     <SafeAreaView style={[styles.safe, style]}>
       <View style={styles.bgBlobTop} />
@@ -37,19 +45,14 @@ export default function ThemedScreen({
       >
         {scroll ? (
           <ScrollView
-            contentContainerStyle={[
-              styles.scrollContent,
-              contentContainerStyle,
-            ]}
+            contentContainerStyle={combinedContentStyle}
             bounces={false}
             overScrollMode="never"
           >
             {children}
           </ScrollView>
         ) : (
-          <View style={[styles.fullContent, contentContainerStyle]}>
-            {children}
-          </View>
+          <View style={combinedContentStyle}>{children}</View>
         )}
       </Animated.View>
     </SafeAreaView>

@@ -8,20 +8,20 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { View, StyleSheet } from "react-native";
 import BarraDeNavegacao from "../components/BarraDeNavegacao";
 import GlobalAlert from "../components/GlobalAlert";
+import FabAdicionar from "../components/FabAdicionar";
 
-const NAVBAR_GUARD = 110;
 
 function LayoutContent() {
   const { isAuthenticated } = useAuth();
   return (
     <View
       style={[
-        styles.container,
-        isAuthenticated && { paddingBottom: NAVBAR_GUARD },
+        styles.container
       ]}
     >
       <Stack screenOptions={{ headerShown: false }} />
       {isAuthenticated && <BarraDeNavegacao />}
+      {isAuthenticated && <FabAdicionar />}
       <GlobalAlert />
     </View>
   );

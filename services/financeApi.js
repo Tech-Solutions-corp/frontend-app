@@ -142,7 +142,7 @@ export const financeApi = {
     }),
 
   getInsightById: (token, insightId) =>
-  apiRequest(`/api/v1/ai-insights/${insightId}`, { token }),
+    apiRequest(`/api/v1/ai-insights/${insightId}`, { token }),
 
   createImport: (token, payload) =>
     apiRequest("/api/v1/imports", {
@@ -166,4 +166,13 @@ export const financeApi = {
     formData.append("accountId", String(accountId));
     return apiUpload(`/api/v1/imports/${userId}/upload`, { token, formData });
   },
+
+  getExpensesByCategory: (token, userId) => 
+    apiRequest(`/api/v1/metrics/expenses-categories/${userId}`, { token }),
+
+  getBalancePerMonth: (token, userId) =>
+    apiRequest(`/api/v1/metrics/balance/${userId}`, { token }),
+
+  getHistoricalInsights: (token) =>
+  apiRequest("/api/v1/ai-insights/historical-data", { token }),
 };
