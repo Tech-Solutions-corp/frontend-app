@@ -1,5 +1,5 @@
 const API_BASE_URL =
-  process.env.EXPO_PUBLIC_API_URL || "http://192.168.15.12:8080";
+  process.env.EXPO_PUBLIC_API_URL || "http://localhost:8080";
 
 let onUnauthorized = null;
 

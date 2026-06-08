@@ -41,7 +41,8 @@ function formatMonthYearFromIso(iso) {
 
 export default function HomeScreen() {
   const { loading: authLoading, isAuthenticated } = useRequireAuth();
-  const { token, userId, userName, userEmail, isFirstLogin, clearFirstLogin } = useAuth();
+  const { token, userId, userName, userEmail, isFirstLogin, clearFirstLogin } =
+    useAuth();
   const { t } = useI18n();
 
   const [accounts, setAccounts] = useState([]);
@@ -53,12 +54,11 @@ export default function HomeScreen() {
       if (!token || !userId) return;
 
       try {
-        const [accountData, transactionData, limitData] =
-          await Promise.all([
-            financeApi.listAccountsByUser(token, userId),
-            financeApi.listTransactionsByUser(token, userId),
-            financeApi.listMonthlyLimitsByUser(token, userId),
-          ]);
+        const [accountData, transactionData, limitData] = await Promise.all([
+          financeApi.listAccountsByUser(token, userId),
+          financeApi.listTransactionsByUser(token, userId),
+          financeApi.listMonthlyLimitsByUser(token, userId),
+        ]);
 
         setAccounts(accountData || []);
         setTransactions(transactionData || []);
@@ -75,6 +75,7 @@ export default function HomeScreen() {
 
   const currentMonthKey = new Date().toISOString().slice(0, 7);
 
+  // Usado apenas para o CardLimite (despesas do mês atual)
   const expenseTransactions = useMemo(
     () =>
       transactions.filter(
@@ -83,14 +84,6 @@ export default function HomeScreen() {
           String(transaction.transactionDate || "").startsWith(currentMonthKey),
       ),
     [transactions, currentMonthKey],
-  );
-
-  const incomeTotal = useMemo(
-    () =>
-      transactions
-        .filter((transaction) => transaction.transactionType === "INCOME")
-        .reduce((sum, transaction) => sum + moneyValue(transaction.amount), 0),
-    [transactions],
   );
 
   const expenseTotal = useMemo(
@@ -102,12 +95,28 @@ export default function HomeScreen() {
     [expenseTransactions],
   );
 
-  const spendingPercent = useMemo(() => {
-    const base = incomeTotal + expenseTotal;
-    if (base <= 0) return 0;
-    return Math.min(100, Math.round((expenseTotal / base) * 100));
-  }, [expenseTotal, incomeTotal]);
+  // Totais gerais para o card de contas ativas
+  const incomeTotalGeral = useMemo(
+    () =>
+      transactions
+        .filter((transaction) => transaction.transactionType === "INCOME")
+        .reduce((sum, transaction) => sum + moneyValue(transaction.amount), 0),
+    [transactions],
+  );
 
+  const expenseTotalGeral = useMemo(
+    () =>
+      transactions
+        .filter((transaction) => transaction.transactionType === "EXPENSE")
+        .reduce((sum, transaction) => sum + moneyValue(transaction.amount), 0),
+    [transactions],
+  );
+
+  const spendingPercent = useMemo(() => {
+    const base = incomeTotalGeral + expenseTotalGeral;
+    if (base <= 0) return 0;
+    return Math.min(100, Math.round((expenseTotalGeral / base) * 100));
+  }, [expenseTotalGeral, incomeTotalGeral]);
 
   const currentMonthlyLimit = useMemo(
     () =>
@@ -146,10 +155,7 @@ export default function HomeScreen() {
 
   const totalBalance = useMemo(
     () =>
-      accounts.reduce(
-        (sum, account) => sum + moneyValue(account.balance),
-        0,
-      ),
+      accounts.reduce((sum, account) => sum + moneyValue(account.balance), 0),
     [accounts],
   );
   const balanceColor = totalBalance >= 0 ? "#34D399" : "#FF6B9D";
@@ -185,8 +191,8 @@ export default function HomeScreen() {
         <Text style={styles.summaryLabel}>{t("active_accounts")}</Text>
         <Text style={styles.summaryValue}>{accounts.length}</Text>
         <Text style={styles.summaryMeta}>
-          {t("income")}: {formatMoney(incomeTotal)} · {t("expenses")}:{" "}
-          {formatMoney(expenseTotal)}
+          {t("income")}: {formatMoney(incomeTotalGeral)} · {t("expenses")}:{" "}
+          {formatMoney(expenseTotalGeral)}
         </Text>
         <View style={styles.balanceDivider} />
         <Text style={styles.summaryLabel}>{t("total_balance")}</Text>
