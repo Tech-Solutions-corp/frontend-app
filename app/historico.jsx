@@ -1,12 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import {
-  Alert,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { router } from "expo-router";
 import { useRequireAuth } from "../hooks/useRequireAuth";
 import { useAuth } from "../context/AuthContext";
@@ -14,120 +7,92 @@ import { financeApi } from "../services/financeApi";
 import ThemedScreen from "../components/ThemedScreen";
 import { COLORS, SHADOW } from "../constants/theme";
 import { formatDate } from "../utils/dateFormatter";
+import { formatMoneyBRL, parseMoneyInput } from "../utils/money";
+import EditTransactionModal from "../components/EditTransactionModal";
 
 function toCurrency(value) {
-  return `R$ ${Number(value || 0)
-    .toFixed(2)
-    .replace(".", ",")}`;
+  return formatMoneyBRL(value);
 }
 
 export default function HistoricoScreen() {
-   const { loading: authLoading, isAuthenticated } = useRequireAuth();
-    const { token, userId } = useAuth();
-  
-    const [transactions, setTransactions] = useState([]);
-    const [accounts, setAccounts] = useState([]);
-    const [categories, setCategories] = useState([]);
-    const [description, setDescription] = useState("");
-    const [amount, setAmount] = useState("");
-    const [selectedType, setSelectedType] = useState("EXPENSE");
-    const [selectedAccountId, setSelectedAccountId] = useState(null);
-    const [selectedCategoryId, setSelectedCategoryId] = useState(null);
-    const [refreshing, setRefreshing] = useState(false);
-  
-    const hasAccounts = accounts.length > 0;
-  
-    const loadData = async () => {
-      if (!token || !userId) return;
-      try {
-        const [txData, accountData, categoryData] = await Promise.all([
-          financeApi.listTransactionsByUser(token, userId),
-          financeApi.listAccountsByUser(token, userId),
-          financeApi.listCategoriesByUser(token, userId),
-        ]);
-  
-        setTransactions(txData || []);
-        setAccounts(accountData || []);
-        setCategories(categoryData || []);
-  
-        if (!selectedAccountId && (accountData || []).length > 0) {
-          setSelectedAccountId(String(accountData[0].id));
-        }
-      } catch (error) {
-        Alert.alert("Erro", error.message || "Erro ao carregar gastos.");
-      }
-    };
-  
-    useEffect(() => {
-      if (isAuthenticated) {
-        loadData();
-      }
-    }, [isAuthenticated, token, userId]);
-  
-    const filteredCategories = useMemo(
-      () => categories.filter((c) => c.type === selectedType),
-      [categories, selectedType],
-    );
-  
-    const orderedTransactions = useMemo(
-      () => [...transactions].reverse(),
-      [transactions],
-    );
-  
-    useEffect(() => {
-      if (filteredCategories.length > 0) {
-        setSelectedCategoryId(String(filteredCategories[0].id));
-      } else {
-        setSelectedCategoryId(null);
-      }
-    }, [selectedType, categories.length]);
-  
-    const createTransaction = async () => {
-      if (!hasAccounts || !selectedAccountId) {
-        Alert.alert(
-          "Conta obrigatória",
-          "Toda transação precisa estar associada a uma conta. Crie uma conta antes de salvar.",
-          [
-            { text: "Cancelar", style: "cancel" },
-            {
-              text: "Criar Conta",
-              onPress: () => router.push("/contas"),
-            },
-          ],
-        );
-        return;
-      }
-  
-      if (!description || !amount) {
-        Alert.alert("Validação", "Descrição e valor são obrigatórios.");
-        return;
-      }
-  
-      try {
-        setRefreshing(true);
-        await financeApi.createTransaction(token, {
-          userId: Number(userId),
-          accountId: Number(selectedAccountId),
-          categoryId: selectedCategoryId ? Number(selectedCategoryId) : null,
-          transactionDescription: description,
-          amount: Number(amount.replace(",", ".")),
-          transactionDate: new Date().toISOString().slice(0, 10),
-          transactionType: selectedType,
-        });
-  
-        setDescription("");
-        setAmount("");
-        await loadData();
-      } catch (error) {
-        Alert.alert("Erro", error.message || "Erro ao criar transação.");
-      } finally {
-        setRefreshing(false);
-      }
-    };
-  
-    if (authLoading || !isAuthenticated) {
-      return null;
+  const { loading: authLoading, isAuthenticated } = useRequireAuth();
+  const { token, userId } = useAuth();
+
+  const [transactions, setTransactions] = useState([]);
+  const [accounts, setAccounts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
+  const [deletingTransaction, setDeletingTransaction] = useState(false);
+
+  const [editModal, setEditModal] = useState({
+    visible: false,
+    transaction: null,
+    description: "",
+    amount: "",
+    type: "EXPENSE",
+    accountId: null,
+    categoryId: null,
+  });
+
+  const hasAccounts = accounts.length > 0;
+
+  const loadData = async () => {
+    if (!token || !userId) return;
+    try {
+      const [txData, accountData, categoryData] = await Promise.all([
+        financeApi.listTransactionsByUser(token, userId),
+        financeApi.listAccountsByUser(token, userId),
+        financeApi.listCategoriesByUser(token, userId),
+      ]);
+
+      setTransactions(txData || []);
+      setAccounts(accountData || []);
+      setCategories(categoryData || []);
+    } catch (error) {
+      Alert.alert("Erro", error.message || "Erro ao carregar gastos.");
     }
+  };
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadData();
+    }
+  }, [isAuthenticated, token, userId]);
+
+  const orderedTransactions = useMemo(
+    () => [...transactions].reverse(),
+    [transactions],
+  );
+
+  const openEditModal = (transaction) => {
+    setEditModal({
+      visible: true,
+      transaction,
+      description: transaction.transactionDescription,
+      amount: formatMoneyBRL(transaction.amount).replace("R$ ", ""),
+      type: transaction.transactionType,
+      accountId: String(transaction.accountId),
+      categoryId: transaction.categoryId
+        ? String(transaction.categoryId)
+        : null,
+    });
+  };
+
+  const closeEditModal = () => {
+    setEditModal({
+      visible: false,
+      transaction: null,
+      description: "",
+      amount: "",
+      type: "EXPENSE",
+      accountId: null,
+      categoryId: null,
+    });
+  };
+
+  if (authLoading || !isAuthenticated) {
+    return null;
+  }
 
   return (
     <ThemedScreen contentContainerStyle={styles.container}>
@@ -143,43 +108,95 @@ export default function HistoricoScreen() {
         const isIncome = tx.transactionType === "INCOME";
 
         return (
-          <View key={String(tx.id)} style={styles.item}>
-            <View style={styles.itemHeader}>
-              <View>
-                <Text style={styles.itemTitle}>
-                  {tx.transactionDescription || "Sem Descrição"}
-                </Text>
-                <Text style={styles.itemCategory}>
-                  {category?.name || "Sem Categoria"}
-                </Text>
+          <TouchableOpacity
+            key={String(tx.id)}
+            onPress={() => openEditModal(tx)}
+            activeOpacity={0.8}
+          >
+            <View style={styles.item}>
+              <View style={styles.itemHeader}>
+                <View>
+                  <Text style={styles.itemTitle}>
+                    {tx.transactionDescription || "Sem Descrição"}
+                  </Text>
+                  <Text style={styles.itemCategory}>
+                    {category?.name || "Sem Categoria"}
+                  </Text>
+                </View>
+                <View
+                  style={[
+                    styles.typeBadge,
+                    isIncome ? styles.incomeBadge : styles.expenseBadge,
+                  ]}
+                >
+                  <Text style={styles.typeBadgeText}>
+                    {isIncome ? "Receita" : "Despesa"}
+                  </Text>
+                </View>
               </View>
-              <View
-                style={[
-                  styles.typeBadge,
-                  isIncome ? styles.incomeBadge : styles.expenseBadge,
-                ]}
-              >
-                <Text style={styles.typeBadgeText}>
-                  {isIncome ? "Receita" : "Despesa"}
+              <View style={styles.itemDetails}>
+                <View>
+                  <Text style={styles.itemMeta}>
+                    Conta: {account?.name || "Não Informado"}
+                  </Text>
+                  <Text style={styles.itemMeta}>
+                    {formatDate(tx.transactionDate)}
+                  </Text>
+                </View>
+                <Text style={isIncome ? styles.income : styles.expense}>
+                  {isIncome ? "+" : "-"} {toCurrency(tx.amount)}
                 </Text>
               </View>
             </View>
-            <View style={styles.itemDetails}>
-              <View>
-                <Text style={styles.itemMeta}>
-                  Conta: {account?.name || "Não Informado"}
-                </Text>
-                <Text style={styles.itemMeta}>
-                  {formatDate(tx.transactionDate)}
-                </Text>
-              </View>
-              <Text style={isIncome ? styles.income : styles.expense}>
-                {isIncome ? "+" : "-"} {toCurrency(tx.amount)}
-              </Text>
-            </View>
-          </View>
+          </TouchableOpacity>
         );
       })}
+
+      <EditTransactionModal
+        visible={editModal.visible}
+        transaction={editModal.transaction}
+        accounts={accounts}
+        categories={categories}
+        onClose={closeEditModal}
+        onSave={async (id, payload) => {
+          try {
+            setRefreshing(true);
+            await financeApi.updateTransaction(token, id, {
+              userId: Number(userId),
+              accountId: Number(payload.accountId),
+              categoryId: payload.categoryId
+                ? Number(payload.categoryId)
+                : null,
+              transactionDescription: payload.transactionDescription,
+              amount: payload.amount,
+              transactionDate: new Date().toISOString().slice(0, 10),
+              transactionType: payload.transactionType,
+            });
+            await loadData();
+            closeEditModal();
+          } catch (err) {
+            Alert.alert("Erro", err.message || "Erro ao atualizar transação.");
+          } finally {
+            setRefreshing(false);
+          }
+        }}
+        onDelete={async (id) => {
+          try {
+            setRefreshing(true);
+            setDeletingTransaction(true);
+            await financeApi.deleteTransaction(token, id);
+            await loadData();
+            closeEditModal();
+          } catch (err) {
+            Alert.alert("Erro", err.message || "Erro ao deletar transação.");
+          } finally {
+            setDeletingTransaction(false);
+            setRefreshing(false);
+          }
+        }}
+        saving={refreshing}
+        deleting={deletingTransaction}
+      />
     </ThemedScreen>
   );
 }
@@ -187,102 +204,6 @@ export default function HistoricoScreen() {
 const styles = StyleSheet.create({
   container: {},
   title: { fontSize: 27, fontWeight: "800", color: COLORS.navy },
-  card: {
-    marginTop: 12,
-    backgroundColor: COLORS.white,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: COLORS.purple,
-    padding: 12,
-    ...SHADOW,
-  },
-  cardTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    marginBottom: 8,
-    color: COLORS.navy,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: COLORS.purple,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    marginBottom: 8,
-    backgroundColor: COLORS.white,
-  },
-  label: {
-    marginTop: 4,
-    marginBottom: 5,
-    color: COLORS.indigo,
-    fontWeight: "600",
-  },
-  inlineRow: { flexDirection: "row", gap: 8, marginBottom: 8 },
-  inlineRowWrap: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-    marginBottom: 8,
-  },
-  accountRequiredBox: {
-    borderWidth: 1,
-    borderColor: COLORS.purple,
-    borderRadius: 10,
-    padding: 10,
-    backgroundColor: "#FFF4E5",
-    marginBottom: 8,
-  },
-  accountRequiredText: {
-    color: COLORS.navy,
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  accountRequiredButton: {
-    alignSelf: "flex-start",
-    marginTop: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderRadius: 8,
-    backgroundColor: COLORS.indigo,
-  },
-  accountRequiredButtonText: {
-    color: COLORS.white,
-    fontWeight: "700",
-    fontSize: 12,
-  },
-  tag: {
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderRadius: 999,
-    backgroundColor: "#F3E8FF",
-  },
-  tagActive: { backgroundColor: COLORS.purple },
-  tagText: { color: COLORS.navy, fontWeight: "600", fontSize: 12 },
-  primaryButton: {
-    marginTop: 8,
-    backgroundColor: COLORS.indigo,
-    borderRadius: 10,
-    alignItems: "center",
-    paddingVertical: 12,
-  },
-  primaryButtonText: { color: COLORS.white, fontWeight: "700" },
-  secondaryButton: {
-    marginTop: 12,
-    backgroundColor: COLORS.white,
-    borderColor: COLORS.purple,
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingVertical: 12,
-    alignItems: "center",
-  },
-  secondaryButtonText: { color: COLORS.navy, fontWeight: "600" },
-  sectionTitle: {
-    marginTop: 16,
-    marginBottom: 8,
-    fontSize: 18,
-    fontWeight: "700",
-    color: COLORS.navy,
-  },
   item: {
     backgroundColor: COLORS.white,
     borderRadius: 12,

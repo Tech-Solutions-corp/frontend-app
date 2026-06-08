@@ -10,6 +10,7 @@ import HeaderUsuario from "../components/HeaderUsuario";
 import CardLimite from "../components/CardLimite";
 import WelcomeModal from "../components/WelcomeModal";
 import { COLORS } from "../constants/theme";
+import { formatMoneyBRL, moneyValue } from "../utils/money";
 
 const CATEGORY_COLORS = [
   "#FF6B8A",
@@ -21,9 +22,7 @@ const CATEGORY_COLORS = [
 ];
 
 function formatMoney(value) {
-  return `R$ ${Number(value || 0)
-    .toFixed(2)
-    .replace(".", ",")}`;
+  return formatMoneyBRL(value);
 }
 
 function formatMonthYearFromIso(iso) {
@@ -74,26 +73,30 @@ export default function HomeScreen() {
     }
   }, [isAuthenticated, token, userId]);
 
+  const currentMonthKey = new Date().toISOString().slice(0, 7);
+
   const expenseTransactions = useMemo(
     () =>
       transactions.filter(
-        (transaction) => transaction.transactionType === "EXPENSE",
+        (transaction) =>
+          transaction.transactionType === "EXPENSE" &&
+          String(transaction.transactionDate || "").startsWith(currentMonthKey),
       ),
-    [transactions],
+    [transactions, currentMonthKey],
   );
 
   const incomeTotal = useMemo(
     () =>
       transactions
         .filter((transaction) => transaction.transactionType === "INCOME")
-        .reduce((sum, transaction) => sum + Number(transaction.amount || 0), 0),
+        .reduce((sum, transaction) => sum + moneyValue(transaction.amount), 0),
     [transactions],
   );
 
   const expenseTotal = useMemo(
     () =>
       expenseTransactions.reduce(
-        (sum, transaction) => sum + Number(transaction.amount || 0),
+        (sum, transaction) => sum + moneyValue(transaction.amount),
         0,
       ),
     [expenseTransactions],
@@ -105,7 +108,6 @@ export default function HomeScreen() {
     return Math.min(100, Math.round((expenseTotal / base) * 100));
   }, [expenseTotal, incomeTotal]);
 
-  const currentMonthKey = new Date().toISOString().slice(0, 7);
 
   const currentMonthlyLimit = useMemo(
     () =>
@@ -116,7 +118,7 @@ export default function HomeScreen() {
   );
 
   const monthlyLimitPercent = useMemo(() => {
-    const limitAmount = Number(currentMonthlyLimit?.amount || 0);
+    const limitAmount = moneyValue(currentMonthlyLimit?.amount);
     if (limitAmount <= 0) return spendingPercent;
     return Math.min(100, Math.round((expenseTotal / limitAmount) * 100));
   }, [currentMonthlyLimit, expenseTotal, spendingPercent]);
@@ -128,16 +130,16 @@ export default function HomeScreen() {
       );
       const accountIncome = accountTransactions
         .filter((tx) => tx.transactionType === "INCOME")
-        .reduce((sum, tx) => sum + Number(tx.amount || 0), 0);
+        .reduce((sum, tx) => sum + moneyValue(tx.amount), 0);
       const accountExpense = accountTransactions
         .filter((tx) => tx.transactionType === "EXPENSE")
-        .reduce((sum, tx) => sum + Number(tx.amount || 0), 0);
+        .reduce((sum, tx) => sum + moneyValue(tx.amount), 0);
 
       return {
         ...account,
         income: accountIncome,
         expense: accountExpense,
-        balance: Number(account.balance || 0),
+        balance: moneyValue(account.balance),
       };
     });
   }, [accounts, transactions]);
@@ -145,7 +147,7 @@ export default function HomeScreen() {
   const totalBalance = useMemo(
     () =>
       accounts.reduce(
-        (sum, account) => sum + Number(account.balance || 0),
+        (sum, account) => sum + moneyValue(account.balance),
         0,
       ),
     [accounts],

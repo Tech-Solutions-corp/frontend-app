@@ -6,7 +6,6 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  TouchableWithoutFeedback,
   View,
 } from "react-native";
 import { router } from "expo-router";
@@ -16,11 +15,15 @@ import { financeApi } from "../services/financeApi";
 import ThemedScreen from "../components/ThemedScreen";
 import { COLORS, SHADOW } from "../constants/theme";
 import { formatDate } from "../utils/dateFormatter";
+import {
+  formatMoneyBRL,
+  parseMoneyInput,
+  sanitizeMoneyInput,
+} from "../utils/money";
+import EditTransactionModal from "../components/EditTransactionModal";
 
 function toCurrency(value) {
-  return `R$ ${Number(value || 0)
-    .toFixed(2)
-    .replace(".", ",")}`;
+  return formatMoneyBRL(value);
 }
 
 export default function GastosScreen() {
@@ -36,16 +39,9 @@ export default function GastosScreen() {
   const [selectedAccountId, setSelectedAccountId] = useState(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [deletingTransaction, setDeletingTransaction] = useState(false);
 
-  const [editModal, setEditModal] = useState({
-    visible: false,
-    transaction: null,
-    description: "",
-    amount: "",
-    type: "EXPENSE",
-    accountId: null,
-    categoryId: null,
-  });
+  const [editModal, setEditModal] = useState({ visible: false, transaction: null });
 
   const hasAccounts = accounts.length > 0;
 
@@ -115,14 +111,21 @@ export default function GastosScreen() {
       return;
     }
 
+    const parsedAmount = parseMoneyInput(amount);
+    if (!Number.isFinite(parsedAmount)) {
+      Alert.alert("Validação", "Informe um valor válido.");
+      return;
+    }
+
     try {
       setRefreshing(true);
+
       await financeApi.createTransaction(token, {
         userId: Number(userId),
         accountId: Number(selectedAccountId),
         categoryId: selectedCategoryId ? Number(selectedCategoryId) : null,
         transactionDescription: description,
-        amount: Number(amount.replace(",", ".")),
+        amount: parsedAmount,
         transactionDate: new Date().toISOString().slice(0, 10),
         transactionType: selectedType,
       });
@@ -138,45 +141,25 @@ export default function GastosScreen() {
   };
 
   const openEditModal = (transaction) => {
-    setEditModal({
-      visible: true,
-      transaction,
-      description: transaction.transactionDescription,
-      amount: toCurrency(transaction.amount).substring(3),
-      type: transaction.transactionType,
-      accountId: String(transaction.accountId),
-      categoryId: transaction.categoryId ? String(transaction.categoryId) : null,
-    });
+    setEditModal({ visible: true, transaction });
   };
 
   const closeEditModal = () => {
-    setEditModal({
-      visible: false,
-      transaction: null,
-      description: "",
-      amount: "",
-      type: "EXPENSE",
-      accountId: null,
-      categoryId: null,
-    });
+    setEditModal({ visible: false, transaction: null });
   };
 
-  const saveTransaction = async () => {
-    if (!editModal.description || !editModal.amount) {
-      Alert.alert("Validação", "Descrição e valor são obrigatórios.");
-      return;
-    }
-
+  const handleSave = async (transactionId, payload) => {
     try {
       setRefreshing(true);
-      await financeApi.updateTransaction(token, editModal.transaction.id, {
+
+      await financeApi.updateTransaction(token, transactionId, {
         userId: Number(userId),
-        accountId: Number(editModal.accountId),
-        categoryId: editModal.categoryId ? Number(editModal.categoryId) : null,
-        transactionDescription: editModal.description,
-        amount: Number(editModal.amount.replace(",", ".")),
+        accountId: Number(payload.accountId),
+        categoryId: payload.categoryId ? Number(payload.categoryId) : null,
+        transactionDescription: payload.transactionDescription,
+        amount: payload.amount,
         transactionDate: new Date().toISOString().slice(0, 10),
-        transactionType: editModal.type,
+        transactionType: payload.transactionType,
       });
 
       await loadData();
@@ -188,27 +171,21 @@ export default function GastosScreen() {
     }
   };
 
-  const deleteTransaction = async () => {
-    Alert.alert("Confirmar", "Tem certeza que deseja deletar esta transação?", [
-      { text: "Cancelar", style: "cancel" },
-      {
-        text: "Deletar",
-        style: "destructive",
-        onPress: async () => {
-          try {
-            setRefreshing(true);
-            await financeApi.deleteTransaction(token, editModal.transaction.id);
-            await loadData();
-            closeEditModal();
-          } catch (error) {
-            Alert.alert("Erro", error.message || "Erro ao deletar transação.");
-          } finally {
-            setRefreshing(false);
-          }
-        },
-      },
-    ]);
+  const handleDelete = async (transactionId) => {
+    try {
+      setRefreshing(true);
+      setDeletingTransaction(true);
+      await financeApi.deleteTransaction(token, transactionId);
+      await loadData();
+      closeEditModal();
+    } catch (error) {
+      Alert.alert("Erro", error.message || "Erro ao deletar transação.");
+    } finally {
+      setDeletingTransaction(false);
+      setRefreshing(false);
+    }
   };
+
 
   if (authLoading || !isAuthenticated) {
     return null;
@@ -233,7 +210,7 @@ export default function GastosScreen() {
           placeholderTextColor="rgba(26, 26, 46, 0.55)"
           keyboardType="decimal-pad"
           value={amount}
-          onChangeText={setAmount}
+          onChangeText={(text) => setAmount(sanitizeMoneyInput(text))}
         />
 
         <View style={styles.inlineRow}>
@@ -370,134 +347,17 @@ export default function GastosScreen() {
         );
       })}
 
-      <Modal transparent animationType="fade" visible={editModal.visible}>
-        <TouchableWithoutFeedback onPress={closeEditModal}>
-          <View style={styles.modalBackdrop}>
-            <TouchableWithoutFeedback>
-              <View style={styles.modalCard}>
-                <Text style={styles.cardTitle}>Editar Transação</Text>
-
-                <TextInput
-                  style={styles.input}
-                  placeholder="Descrição"
-                  placeholderTextColor="rgba(26, 26, 46, 0.55)"
-                  value={editModal.description}
-                  onChangeText={(v) =>
-                    setEditModal({ ...editModal, description: v })
-                  }
-                />
-
-                <TextInput
-                  style={styles.input}
-                  placeholder="Valor"
-                  placeholderTextColor="rgba(26, 26, 46, 0.55)"
-                  keyboardType="decimal-pad"
-                  value={editModal.amount}
-                  onChangeText={(v) =>
-                    setEditModal({ ...editModal, amount: v })
-                  }
-                />
-
-                <View style={styles.inlineRow}>
-                  <TouchableOpacity
-                    style={[
-                      styles.tag,
-                      editModal.type === "EXPENSE" && styles.tagActive,
-                    ]}
-                    onPress={() =>
-                      setEditModal({ ...editModal, type: "EXPENSE" })
-                    }
-                  >
-                    <Text style={styles.tagText}>Despesa</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[
-                      styles.tag,
-                      editModal.type === "INCOME" && styles.tagActive,
-                    ]}
-                    onPress={() =>
-                      setEditModal({ ...editModal, type: "INCOME" })
-                    }
-                  >
-                    <Text style={styles.tagText}>Receita</Text>
-                  </TouchableOpacity>
-                </View>
-
-                <Text style={styles.label}>Conta</Text>
-                <View style={styles.inlineRowWrap}>
-                  {accounts.map((account) => (
-                    <TouchableOpacity
-                      key={String(account.id)}
-                      style={[
-                        styles.tag,
-                        editModal.accountId === String(account.id) &&
-                          styles.tagActive,
-                      ]}
-                      onPress={() =>
-                        setEditModal({
-                          ...editModal,
-                          accountId: String(account.id),
-                        })
-                      }
-                    >
-                      <Text style={styles.tagText}>{account.name}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-
-                <Text style={styles.label}>Categoria</Text>
-                <View style={styles.inlineRowWrap}>
-                  {categories
-                    .filter((c) => c.type === editModal.type)
-                    .map((category) => (
-                      <TouchableOpacity
-                        key={String(category.id)}
-                        style={[
-                          styles.tag,
-                          editModal.categoryId === String(category.id) &&
-                            styles.tagActive,
-                        ]}
-                        onPress={() =>
-                          setEditModal({
-                            ...editModal,
-                            categoryId: String(category.id),
-                          })
-                        }
-                      >
-                        <Text style={styles.tagText}>{category.name}</Text>
-                      </TouchableOpacity>
-                    ))}
-                </View>
-
-                <TouchableOpacity
-                  style={styles.primaryButton}
-                  onPress={saveTransaction}
-                  disabled={refreshing}
-                >
-                  <Text style={styles.primaryButtonText}>
-                    {refreshing ? "Salvando..." : "Salvar Alterações"}
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.deleteButton}
-                  onPress={deleteTransaction}
-                  disabled={refreshing}
-                >
-                  <Text style={styles.deleteButtonText}>Deletar Transação</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.cancelButton}
-                  onPress={closeEditModal}
-                >
-                  <Text style={styles.cancelButtonText}>Cancelar</Text>
-                </TouchableOpacity>
-              </View>
-            </TouchableWithoutFeedback>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
+      <EditTransactionModal
+        visible={editModal.visible}
+        transaction={editModal.transaction}
+        accounts={accounts}
+        categories={categories}
+        onClose={closeEditModal}
+        onSave={handleSave}
+        onDelete={handleDelete}
+        saving={refreshing}
+        deleting={deletingTransaction}
+      />
     </ThemedScreen>
   );
 }

@@ -11,13 +11,10 @@ import { useRouter, useSegments } from "expo-router";
 const ABAS = [
   { id: "home", icone: ImgHome },
   { id: "agenda", icone: ImgCalendario },
-];
-
-const ABA_DIREITA = [
+  { id: "dashboard", icone: ImgDashboard },
   { id: "historico", icone: ImgDocumento },
   { id: "perfil", icone: ImgPerfil },
 ];
-
 const FAB_SIZE = 56;
 
 const BarraDeNavegacao = () => {

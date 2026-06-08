@@ -15,6 +15,7 @@ import { useRequireAuth } from "../hooks/useRequireAuth";
 import { financeApi } from "../services/financeApi";
 import ThemedScreen from "../components/ThemedScreen";
 import { COLORS, SHADOW } from "../constants/theme";
+import { formatMoneyBRL, moneyValue, parseMoneyInput, sanitizeMoneyInput } from "../utils/money";
 
 const ACCOUNT_TYPES = [
   "WALLET",
@@ -33,9 +34,7 @@ const ACCOUNT_TYPE_LABELS = {
 };
 
 function money(value) {
-  return `R$ ${Number(value || 0)
-    .toFixed(2)
-    .replace(".", ",")}`;
+  return formatMoneyBRL(value);
 }
 
 export default function ContasScreen() {
@@ -57,15 +56,7 @@ export default function ContasScreen() {
   });
 
   const handleBalanceChange = (value) => {
-    const sanitized = value.replace(/[^0-9.,]/g, "");
-    const [whole, decimalPart] = sanitized.split(/[,\.]/);
-    if (decimalPart !== undefined) {
-      setBalance(
-        `${whole || "0"},${decimalPart.replace(/[^0-9]/g, "")}`,
-      );
-      return;
-    }
-    setBalance(whole);
+    setBalance(sanitizeMoneyInput(value));
   };
 
   const loadAccounts = async () => {
@@ -97,7 +88,7 @@ export default function ContasScreen() {
 
   const total = useMemo(
     () =>
-      accounts.reduce((acc, account) => acc + Number(account.balance || 0), 0),
+      accounts.reduce((acc, account) => acc + moneyValue(account.balance), 0),
     [accounts],
   );
 
@@ -106,13 +97,20 @@ export default function ContasScreen() {
       return;
     }
 
+    const parsedBalance = balance.trim() ? parseMoneyInput(balance) : 0;
+    if (!Number.isFinite(parsedBalance)) {
+      Alert.alert(t("error"), "Informe um valor válido.");
+      return;
+    }
+
     try {
       setSubmitting(true);
+
       await financeApi.createAccount(token, {
         userId: Number(userId),
         name,
         type,
-        balance: Number(balance.replace(",", ".")),
+        balance: parsedBalance,
       });
       setName("");
       setBalance("");

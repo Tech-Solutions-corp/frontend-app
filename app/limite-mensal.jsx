@@ -13,11 +13,10 @@ import { useRequireAuth } from "../hooks/useRequireAuth";
 import { financeApi } from "../services/financeApi";
 import ThemedScreen from "../components/ThemedScreen";
 import { COLORS, SHADOW } from "../constants/theme";
+import { formatMoneyBRL, parseMoneyInput, sanitizeMoneyInput } from "../utils/money";
 
 function money(value) {
-  return `R$ ${Number(value || 0)
-    .toFixed(2)
-    .replace(".", ",")}`;
+  return formatMoneyBRL(value);
 }
 
 export default function LimiteMensalScreen() {
@@ -71,21 +70,10 @@ export default function LimiteMensalScreen() {
     }
   }
 
-  function formatCurrencyDisplay(raw) {
-    if (!raw) return "";
-    const num = Number(
-      String(raw)
-        .replace(/[^0-9\-.,]/g, "")
-        .replace(",", "."),
-    );
-    if (Number.isNaN(num)) return raw;
-    return num.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-  }
-
   const onChangeAmount = (text) => {
-    const cleaned = text.replace(/[^0-9,\.]/g, "");
+    const cleaned = sanitizeMoneyInput(text);
     setAmount(cleaned);
-    setAmountDisplay(formatCurrencyDisplay(cleaned));
+    setAmountDisplay(formatMoneyBRL(cleaned));
   };
 
   const onChangeDate = (event, date) => {
@@ -103,16 +91,23 @@ export default function LimiteMensalScreen() {
       return;
     }
 
+    const parsedAmount = parseMoneyInput(amount);
+    if (!Number.isFinite(parsedAmount)) {
+      Alert.alert("Validação", "Informe um valor válido.");
+      return;
+    }
+
     try {
       setSubmitting(true);
+
       await financeApi.createMonthlyLimit(token, {
         userId: Number(userId),
         referenceMonth: `${referenceMonth}-01`,
-        amount: Number(amount.replace(",", ".")),
+        amount: parsedAmount,
       });
       setCurrentLimit({
         referenceMonth: `${referenceMonth}-01`,
-        amount: Number(amount.replace(",", ".")),
+        amount: parsedAmount,
       });
       Alert.alert("Sucesso", "Limite Mensal Salvo Com Sucesso.");
     } catch (error) {

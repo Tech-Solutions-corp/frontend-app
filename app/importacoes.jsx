@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import {
   Alert,
+  ActivityIndicator,
+  Modal,
   StyleSheet,
   Text,
   TextInput,
@@ -195,7 +197,11 @@ export default function ImportacoesScreen() {
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Registrar Importação</Text>
 
-        <TouchableOpacity style={styles.primaryButton} onPress={pickDocument}>
+        <TouchableOpacity
+          style={styles.primaryButton}
+          onPress={pickDocument}
+          disabled={submitting}
+        >
           <Text style={styles.primaryButtonText}>
             {hasSelectedFile ? "Trocar arquivo CSV" : "Selecionar CSV"}
           </Text>
@@ -209,7 +215,11 @@ export default function ImportacoesScreen() {
             {hasSelectedFile ? fileName : "Selecione um arquivo CSV para continuar"}
           </Text>
           {hasSelectedFile ? (
-            <TouchableOpacity onPress={clearSelectedFile} style={styles.fileClearButton}>
+            <TouchableOpacity
+              onPress={clearSelectedFile}
+              style={styles.fileClearButton}
+              disabled={submitting}
+            >
               <Text style={styles.fileClearButtonText}>Remover arquivo</Text>
             </TouchableOpacity>
           ) : null}
@@ -223,6 +233,7 @@ export default function ImportacoesScreen() {
                 key={acc.id}
                 style={[styles.tag, selectedAccountId === acc.id && styles.tagActive]}
                 onPress={() => setSelectedAccountId(acc.id)}
+                disabled={submitting}
               >
                 <Text style={styles.tagText}>{acc.name}</Text>
               </TouchableOpacity>
@@ -250,20 +261,29 @@ export default function ImportacoesScreen() {
             </Text>
             <Text style={styles.itemStatus}>{formatLabel(item.status)}</Text>
           </View>
-          <TouchableOpacity
-            style={[
-              styles.reprocessButton,
-              reprocessingId === item.id && styles.reprocessButtonDisabled,
-            ]}
-            onPress={() => reprocessImport(item.id)}
-            disabled={reprocessingId === item.id}
-          >
+            <TouchableOpacity
+              style={[
+                styles.reprocessButton,
+                reprocessingId === item.id && styles.reprocessButtonDisabled,
+              ]}
+              onPress={() => reprocessImport(item.id)}
+              disabled={reprocessingId === item.id || submitting}
+            >
             <Text style={styles.reprocessButtonText}>
               {reprocessingId === item.id ? "Reprocessando..." : "Reprocessar"}
             </Text>
           </TouchableOpacity>
         </View>
       ))}
+
+      <Modal transparent visible={submitting} animationType="fade">
+        <View style={styles.loadingOverlay}>
+          <View style={styles.loadingCard}>
+            <ActivityIndicator size="large" color={COLORS.indigo} />
+            <Text style={styles.loadingText}>Importando transações...</Text>
+          </View>
+        </View>
+      </Modal>
     </ThemedScreen>
   );
 }
@@ -383,5 +403,28 @@ const styles = StyleSheet.create({
     color: COLORS.indigo,
     fontWeight: "700",
     fontSize: 12,
+  },
+  loadingOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.35)",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 24,
+  },
+  loadingCard: {
+    width: "100%",
+    maxWidth: 280,
+    backgroundColor: COLORS.white,
+    borderRadius: 16,
+    paddingVertical: 22,
+    paddingHorizontal: 20,
+    alignItems: "center",
+    gap: 12,
+    ...SHADOW,
+  },
+  loadingText: {
+    color: COLORS.navy,
+    fontWeight: "700",
+    textAlign: "center",
   },
 });
