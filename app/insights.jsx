@@ -1,20 +1,13 @@
 import React, { useEffect, useState } from "react";
-import {
-  Alert,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useRequireAuth } from "../hooks/useRequireAuth";
+import { VoiceInput } from "../components/VoiceInput";
 import { useAuth } from "../context/AuthContext";
 import { financeApi } from "../services/financeApi";
 import ThemedScreen from "../components/ThemedScreen";
 import { COLORS, SHADOW } from "../constants/theme";
 import { formatDateTime } from "../utils/dateFormatter";
 import { router } from "expo-router";
-
 
 const INSIGHT_TYPES = ["SPENDING_PATTERN", "SAVING_TIP", "ANOMALY_DETECTION"];
 
@@ -36,9 +29,9 @@ export default function InsightsScreen() {
   const loadInsights = async () => {
     try {
       const data = await financeApi.listInsightsByUser(token, userId);
-      const sorted = (data || []).slice().sort((a, b) =>
-        new Date(b.generatedAt) - new Date(a.generatedAt),
-      );
+      const sorted = (data || [])
+        .slice()
+        .sort((a, b) => new Date(b.generatedAt) - new Date(a.generatedAt));
       setInsights(sorted);
     } catch (error) {
       Alert.alert("Erro", error.message || "Erro ao carregar insights.");
@@ -82,11 +75,10 @@ export default function InsightsScreen() {
 
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Pedir Insight de IA</Text>
-        <TextInput
+        <VoiceInput
           style={[styles.input, styles.textArea]}
           multiline
           placeholder="Especifique sua necessidade (ex: Como posso economizar mais no transporte?)"
-          placeholderTextColor="rgba(26, 26, 46, 0.55)"
           value={specification}
           onChangeText={setSpecification}
         />
@@ -190,7 +182,11 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     padding: 14,
   },
-  notificationTitle: { color: COLORS.purple, fontWeight: "700", marginBottom: 6 },
+  notificationTitle: {
+    color: COLORS.purple,
+    fontWeight: "700",
+    marginBottom: 6,
+  },
   notificationDate: { color: COLORS.indigo, fontSize: 12 },
   insightType: { color: COLORS.purple, fontWeight: "700", marginBottom: 4 },
   insightText: { color: COLORS.navy, lineHeight: 20 },

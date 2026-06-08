@@ -4,15 +4,17 @@
   "main": "expo-router/entry",
   "scripts": {
     "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "web": "expo start --web"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "^2.2.0",
     "@react-native-community/datetimepicker": "8.4.4",
+    "@react-native-voice/voice": "^3.2.4",
     "babel-preset-expo": "^56.0.12",
     "expo": "~54.0.34",
+    "expo-dev-client": "~6.0.21",
     "expo-router": "~6.0.23",
     "expo-status-bar": "~3.0.9",
     "nativewind": "^4.2.2",
@@ -26,6 +28,9 @@
     "react-native-toast-message": "^2.3.3",
     "react-native-web": "^0.21.0",
     "tailwindcss": "^3.4.19"
+  },
+  "devDependencies": {
+    "@react-native-community/cli": "latest"
   },
   "private": true
 }
