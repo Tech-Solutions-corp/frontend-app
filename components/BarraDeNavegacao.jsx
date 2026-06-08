@@ -13,7 +13,7 @@ const ABA_ESQUERDA = [
 ];
 
 const ABA_DIREITA = [
-  { id: "gastos", icone: ImgDocumento },
+  { id: "historico", icone: ImgDocumento },
   { id: "perfil", icone: ImgPerfil },
 ];
 
@@ -29,6 +29,7 @@ const BarraDeNavegacao = ({ abaAtiva = "home" }) => {
     agenda: "/agenda",
     gastos: "/gastos",
     perfil: "/perfil",
+    historico: "/historico"
   };
 
   const handlePress = (abaId) => {
